@@ -119,16 +119,50 @@ export function FarmerDashboard() {
   useEffect(() => {
     const load = async () => {
       try {
-        const [cropResponse, weatherResponse, trainingResponse, orderResponse] = await Promise.all([
+        const [cropResponse, weatherResponse, trainingResponse] = await Promise.all([
           api.listCrops(),
           api.getWeather(weatherLocation),
           api.listTrainings(),
-          api.listFarmerOrders(),
         ]);
         setCrops(cropResponse.crops);
         setWeather(weatherResponse);
         setTrainings(trainingResponse.trainings);
-        setOrders(orderResponse.orders);
+
+        // Mock orders for testing
+        setOrders([
+          {
+            id: "order-1",
+            total: 45.50,
+            status: "pending",
+            deliveryMethod: "delivery",
+            address: "Kingston, Jamaica",
+            deliveryTime: "2026-03-16T14:00",
+            paymentMethod: "card",
+            orderDate: "2026-03-15T10:30:00Z",
+            buyerName: "Test Buyer",
+            buyerEmail: "testbuyer@example.com",
+            items: [
+              {
+                product: {
+                  id: "prod-1",
+                  name: "Fresh Tomatoes",
+                  price: 5.00,
+                  unit: "lb"
+                },
+                quantity: 5
+              },
+              {
+                product: {
+                  id: "prod-2", 
+                  name: "Organic Lettuce",
+                  price: 3.50,
+                  unit: "lb"
+                },
+                quantity: 3
+              }
+            ]
+          }
+        ]);
       } catch (error) {
         toast.error((error as Error).message || "Failed loading dashboard data");
       }

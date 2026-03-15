@@ -29,5 +29,36 @@
     "status": "pending",
     "userId": "usr_test_buyer_001",
     "orderDate": "2026-03-15T15:26:58.196Z"
+  },
+  {
+    "id": "ord_1773589877410_6514",
+    "items": [
+      {
+        "product": {
+          "id": "p3",
+          "name": "Irish Potato",
+          "price": 2.6,
+          "unit": "per kg",
+          "farmer": "St. Mary Growers",
+          "location": "St. Mary",
+          "stock": 260,
+          "category": "vegetables",
+          "image": "https://images.unsplash.com/photo-1518977676601-b53f82aba655?fit=max&fm=jpg&q=80&w=1080",
+          "description": "Premium irish potato for market and home use."
+        },
+        "quantity": 1
+      }
+    ],
+    "deliveryMethod": "delivery",
+    "address": "Kingston",
+    "payment": {
+      "status": "mock_success",
+      "paymentIntentId": "mock_pi_1773589877274",
+      "provider": "mock"
+    },
+    "total": 2.6,
+    "status": "pending",
+    "userId": "usr_test_buyer_001",
+    "orderDate": "2026-03-15T15:51:17.410Z"
   }
 ]
