@@ -61,6 +61,12 @@ app.use((err, _, res, __) => {
   if (err?.message === "CORS not allowed") {
     return res.status(403).json({ message: "Origin not allowed" });
   }
+
+  if (err?.type === "entity.parse.failed") {
+    return res.status(400).json({ message: "Invalid JSON request body" });
+  }
+
+  console.error(err);
   return res.status(500).json({ message: "Internal server error" });
 });
 
