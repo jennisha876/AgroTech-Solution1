@@ -14,13 +14,10 @@ import aiRoutes from "./routes/ai.js";
 import reviewsRoutes from "./routes/reviews.js";
 import adminRoutes from "./routes/admin.js";
 import trainingsRoutes from "./routes/trainings.js";
+import { isAllowedFrontendOrigin } from "./utils/origins.js";
 
 const app = express();
 const port = Number(process.env.PORT || 4000);
-const originList = (process.env.FRONTEND_ORIGIN || "http://localhost:5173")
-  .split(",")
-  .map((value) => value.trim())
-  .filter(Boolean);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const frontendDist = path.resolve(__dirname, "../../dist");
@@ -29,7 +26,7 @@ app.use(
   cors({
     credentials: true,
     origin(requestOrigin, callback) {
-      if (!requestOrigin || originList.includes(requestOrigin)) {
+      if (isAllowedFrontendOrigin(requestOrigin)) {
         return callback(null, true);
       }
       return callback(new Error("CORS not allowed"));

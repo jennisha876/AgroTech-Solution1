@@ -35,6 +35,7 @@ It supports:
 ## Project Structure
 
 - Frontend app: [src](src)
+- Frontend compatibility folder: [frontend](frontend)
 - Backend API: [backend/src](backend/src)
 - Static assets (favicon/logo): [public/images](public/images)
 
@@ -46,6 +47,8 @@ Create `backend/.env` from `backend/.env.example` and set values as needed:
 - `FRONTEND_ORIGIN=http://localhost:5173`
 - `OPENAI_API_KEY=` (optional)
 - `STRIPE_SECRET_KEY=` (optional)
+
+For local development, the backend accepts `localhost` and `127.0.0.1` on any port, so Vite can move between ports like `5173` and `5174` without breaking auth requests.
 
 ## Setup and Run
 
@@ -151,6 +154,8 @@ npm run build
 - `PORT=4000` (or platform port)
 - `JWT_SECRET=...`
 - `FRONTEND_ORIGIN=https://your-domain.com` (or comma-separated list)
+
+If you see `Origin not allowed`, it means the browser URL sending the request is not in the backend CORS allowlist. On Render, set `FRONTEND_ORIGIN` to your public site URL.
 
 4. Start app:
 

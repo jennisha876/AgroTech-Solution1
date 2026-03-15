@@ -129,6 +129,13 @@ export const api = {
     });
   },
 
+  async updateSubscription(subscriptionLevel: "basic" | "diamond" | "platinum") {
+    return request<{ message: string; user: User }>("/users/subscription", {
+      method: "PUT",
+      body: JSON.stringify({ subscriptionLevel }),
+    });
+  },
+
   async resetPassword(payload: { token: string; newPassword: string }) {
     return request<{ message: string }>("/users/password-reset", {
       method: "POST",

@@ -3,7 +3,10 @@ const subscriptionSchema = z.object({
   subscriptionLevel: z.enum(["basic", "diamond", "platinum"]),
 });
 
-router.put("/subscription", requireAuth, async (req, res) => {
+    const frontendOrigin = (process.env.FRONTEND_ORIGIN || "")
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean)[0] || "http://localhost:5173";
   const parseResult = subscriptionSchema.safeParse(req.body);
   if (!parseResult.success) {
     return res.status(400).json({ message: "Invalid subscription data" });

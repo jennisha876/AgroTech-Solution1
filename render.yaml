@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: agrotech-solution
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm --prefix backend install && npm run build
+    startCommand: npm run start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: JWT_SECRET
+        sync: false
+      - key: FRONTEND_ORIGIN
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
