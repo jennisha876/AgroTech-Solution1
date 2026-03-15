@@ -45,8 +45,8 @@ export function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b sticky top-0 z-10">
+    <div className="min-h-screen bg-background">
+      <header className="bg-card border-b sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Shield className="h-8 w-8 text-emerald-700" />

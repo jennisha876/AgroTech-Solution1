@@ -14,6 +14,7 @@ import { Leaf, LogOut, Plus, Trash2, Edit, CloudSun, Eye, EyeOff } from "lucide-
 import { toast } from "sonner";
 import { AiAssistant } from "./AiAssistant";
 import { ThemeToggle } from "./ThemeToggle";
+import { JAMAICA_PARISHES } from "../lib/parishes";
 
 const emptyForm = {
   name: "",
@@ -34,7 +35,7 @@ export function FarmerDashboard() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  const [weatherLocation, setWeatherLocation] = useState(user?.location || "Nairobi");
+  const [weatherLocation, setWeatherLocation] = useState(user?.location || "Kingston");
   const [weather, setWeather] = useState<{
     location: string;
     current: { temp: number; humidity: number; windSpeed: number; condition: string };
@@ -196,8 +197,8 @@ export function FarmerDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b sticky top-0 z-10">
+    <div className="min-h-screen bg-background">
+      <header className="bg-card border-b sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Leaf className="h-8 w-8 text-green-600" />
@@ -302,7 +303,7 @@ export function FarmerDashboard() {
                     <div className="space-y-2">
                       {weather.alerts.length === 0 && <p className="text-sm text-slate-600">No active alerts</p>}
                       {weather.alerts.map((alert) => (
-                        <div key={alert.id} className="border rounded-md p-3 bg-amber-50">
+                        <div key={alert.id} className="border rounded-md p-3 bg-amber-100/30 dark:bg-amber-900/20">
                           <p className="text-sm font-medium capitalize">{alert.type} ({alert.severity})</p>
                           <p className="text-sm">{alert.message}</p>
                         </div>
@@ -322,7 +323,17 @@ export function FarmerDashboard() {
                 <div className="space-y-1"><Label>Username</Label><Input value={profile.username} onChange={(e) => setProfile((p) => ({ ...p, username: e.target.value }))} /></div>
                 <div className="space-y-1"><Label>Email</Label><Input value={profile.email} onChange={(e) => setProfile((p) => ({ ...p, email: e.target.value }))} /></div>
                 <div className="space-y-1"><Label>Phone</Label><Input value={profile.phone} onChange={(e) => setProfile((p) => ({ ...p, phone: e.target.value }))} /></div>
-                <div className="space-y-1 md:col-span-2"><Label>Location</Label><Input value={profile.location} onChange={(e) => setProfile((p) => ({ ...p, location: e.target.value }))} /></div>
+                <div className="space-y-1 md:col-span-2">
+                  <Label>Location</Label>
+                  <Select value={profile.location || ""} onValueChange={(value) => setProfile((p) => ({ ...p, location: value }))}>
+                    <SelectTrigger><SelectValue placeholder="Select a Jamaica parish" /></SelectTrigger>
+                    <SelectContent>
+                      {JAMAICA_PARISHES.map((parish) => (
+                        <SelectItem key={parish} value={parish}>{parish}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="md:col-span-2"><Button onClick={saveProfile} className="bg-green-600 hover:bg-green-700">Save Profile</Button></div>
               </CardContent>
             </Card>

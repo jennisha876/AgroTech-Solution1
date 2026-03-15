@@ -6,8 +6,10 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./ui/card";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Leaf, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
+import { JAMAICA_PARISHES, isJamaicaParish } from "../lib/parishes";
 
 export function Register() {
   const [name, setName] = useState("");
@@ -52,6 +54,11 @@ export function Register() {
       return;
     }
 
+    if (location && !isJamaicaParish(location)) {
+      toast.error("Please select a valid Jamaica parish");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -78,7 +85,7 @@ export function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex items-center justify-center gap-2 mb-8">
@@ -160,13 +167,16 @@ export function Register() {
 
               <div className="space-y-2">
                 <Label htmlFor="location">{userType === 'farmer' ? 'Farm Location' : 'Delivery Address'} (Optional)</Label>
-                <Input
-                  id="location"
-                  type="text"
-                  placeholder="City, State"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                />
+                <Select value={location || ""} onValueChange={setLocation}>
+                  <SelectTrigger id="location">
+                    <SelectValue placeholder="Select a Jamaica parish" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {JAMAICA_PARISHES.map((parish) => (
+                      <SelectItem key={parish} value={parish}>{parish}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
@@ -217,13 +227,13 @@ export function Register() {
             </form>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
-            <div className="text-sm text-center text-gray-600">
+            <div className="text-sm text-center text-muted-foreground">
               Already have an account?{" "}
               <Link to="/login" className="text-green-600 hover:underline">
                 Sign in
               </Link>
             </div>
-            <Link to="/" className="text-sm text-center text-gray-600 hover:underline">
+            <Link to="/" className="text-sm text-center text-muted-foreground hover:underline">
               Back to home
             </Link>
           </CardFooter>

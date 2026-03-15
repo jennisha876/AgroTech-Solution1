@@ -2,6 +2,7 @@ import { Router } from "express";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { signToken } from "../middleware/auth.js";
+import { isValidParish } from "../utils/parishes.js";
 import { makeId, nowIso, readJson, writeJson } from "../utils/db.js";
 
 const router = Router();
@@ -27,7 +28,11 @@ const registerSchema = z.object({
   email: z.string().email("Please provide a valid email address"),
   password: passwordSchema,
   userType: z.enum(["farmer", "buyer", "admin"]),
-  location: z.string().optional().default(""),
+  location: z
+    .string()
+    .optional()
+    .default("")
+    .refine((value) => isValidParish(value), "Location must be a valid Jamaica parish"),
   phone: z.string().optional().default(""),
 });
 

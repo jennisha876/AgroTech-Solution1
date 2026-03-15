@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import L from "leaflet";
 import { ThemeToggle } from "./ThemeToggle";
+import { JAMAICA_PARISHES } from "../lib/parishes";
 
 interface CartItem {
   product: Product;
@@ -294,8 +295,8 @@ export function BuyerDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b sticky top-0 z-20">
+    <div className="min-h-screen bg-background">
+      <header className="bg-card border-b sticky top-0 z-20">
         <div className="container mx-auto px-4 py-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-2">
             <Leaf className="h-8 w-8 text-green-600" />
@@ -355,7 +356,7 @@ export function BuyerDashboard() {
                   <Input type="number" placeholder="Max price" value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} />
                   <Button onClick={fetchProducts}>Apply Filters</Button>
                 </div>
-                <p className="text-sm text-slate-600">Parish search is enabled for all parishes. Example: St. Thomas, Portland, Clarendon, Kingston.</p>
+                <p className="text-sm text-muted-foreground">Parish search is enabled for all parishes. Example: St. Thomas, Portland, Clarendon, Kingston.</p>
               </CardContent>
             </Card>
 
@@ -369,8 +370,8 @@ export function BuyerDashboard() {
                     <CardTitle className="text-base">{product.name}</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-1">
-                    <p className="text-sm text-slate-600">{product.farmer} • {product.location}</p>
-                    <p className="text-sm text-slate-500">{product.description}</p>
+                    <p className="text-sm text-muted-foreground">{product.farmer} • {product.location}</p>
+                    <p className="text-sm text-muted-foreground">{product.description}</p>
                     <p className="font-semibold text-green-700">${product.price} {product.unit}</p>
                     <Button className="w-full mt-2" onClick={() => addToCart(product)}>
                       <ShoppingCart className="h-4 w-4 mr-2" />
@@ -389,14 +390,14 @@ export function BuyerDashboard() {
               <Card>
                 <CardHeader><CardTitle>Current Cart Details</CardTitle></CardHeader>
                 <CardContent className="space-y-3">
-                  {!cart.length && <p className="text-sm text-slate-600">Your cart is empty.</p>}
+                  {!cart.length && <p className="text-sm text-muted-foreground">Your cart is empty.</p>}
                   {cart.map((item) => (
                     <div key={item.product.id} className="border rounded-md p-3">
                       <div className="flex items-center justify-between gap-3">
                         <div>
                           <p className="font-medium">{item.product.name}</p>
-                          <p className="text-sm text-slate-600">From {item.product.farmer} in {item.product.location}</p>
-                          <p className="text-sm text-slate-600">Unit: ${item.product.price} {item.product.unit}</p>
+                          <p className="text-sm text-muted-foreground">From {item.product.farmer} in {item.product.location}</p>
+                          <p className="text-sm text-muted-foreground">Unit: ${item.product.price} {item.product.unit}</p>
                           <p className="text-sm font-medium">Line total: ${(item.product.price * item.quantity).toFixed(2)}</p>
                         </div>
                         <div className="flex items-center gap-2">
@@ -415,21 +416,21 @@ export function BuyerDashboard() {
                 <CardHeader><CardTitle>Delivery Tracking Map</CardTitle></CardHeader>
                 <CardContent>
                   <div ref={mapContainerRef} className="h-80 rounded-md overflow-hidden border" />
-                  <p className="text-xs text-slate-600 mt-2">Map shows where each product in your cart is sourced from.</p>
+                  <p className="text-xs text-muted-foreground mt-2">Map shows where each product in your cart is sourced from.</p>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader><CardTitle>Recent Orders (After Purchase)</CardTitle></CardHeader>
                 <CardContent className="space-y-3">
-                  {!orders.length && <p className="text-sm text-slate-600">No orders yet.</p>}
+                  {!orders.length && <p className="text-sm text-muted-foreground">No orders yet.</p>}
                   {orders.map((order) => (
                     <div key={order.id} className="border rounded-md p-3">
                       <div className="flex items-center justify-between">
                         <p className="font-medium">Order {order.id}</p>
                         <Badge variant="outline" className="capitalize">{order.status}</Badge>
                       </div>
-                      <p className="text-sm text-slate-600">{new Date(order.orderDate).toLocaleString()}</p>
+                      <p className="text-sm text-muted-foreground">{new Date(order.orderDate).toLocaleString()}</p>
                       <p className="text-sm">Delivery: {order.deliveryMethod} • {order.address}</p>
                       <div className="text-sm mt-2 space-y-1">
                         {order.items.map((item) => (
@@ -516,7 +517,17 @@ export function BuyerDashboard() {
                 <div className="space-y-1"><Label>Username</Label><Input value={profile.username} onChange={(e) => setProfile((p) => ({ ...p, username: e.target.value }))} /></div>
                 <div className="space-y-1"><Label>Email</Label><Input value={profile.email} onChange={(e) => setProfile((p) => ({ ...p, email: e.target.value }))} /></div>
                 <div className="space-y-1"><Label>Phone</Label><Input value={profile.phone} onChange={(e) => setProfile((p) => ({ ...p, phone: e.target.value }))} /></div>
-                <div className="space-y-1 md:col-span-2"><Label>Location</Label><Input value={profile.location} onChange={(e) => setProfile((p) => ({ ...p, location: e.target.value }))} /></div>
+                <div className="space-y-1 md:col-span-2">
+                  <Label>Location</Label>
+                  <Select value={profile.location || ""} onValueChange={(value) => setProfile((p) => ({ ...p, location: value }))}>
+                    <SelectTrigger><SelectValue placeholder="Select a Jamaica parish" /></SelectTrigger>
+                    <SelectContent>
+                      {JAMAICA_PARISHES.map((parish) => (
+                        <SelectItem key={parish} value={parish}>{parish}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="md:col-span-2"><Button onClick={saveProfile} className="bg-green-600 hover:bg-green-700">Save Profile</Button></div>
               </CardContent>
             </Card>
@@ -550,7 +561,7 @@ export function BuyerDashboard() {
             <Card>
               <CardHeader><CardTitle>Switch Account Type</CardTitle></CardHeader>
               <CardContent>
-                <p className="text-sm text-slate-600 mb-3">Use the same profile to switch from buyer to farmer account.</p>
+                <p className="text-sm text-muted-foreground mb-3">Use the same profile to switch from buyer to farmer account.</p>
                 <Button onClick={handleSwitchRole} variant="outline">Switch to Farmer</Button>
               </CardContent>
             </Card>

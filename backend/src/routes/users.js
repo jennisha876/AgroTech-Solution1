@@ -2,6 +2,7 @@ import { Router } from "express";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { requireAuth, signToken } from "../middleware/auth.js";
+import { isValidParish } from "../utils/parishes.js";
 import { makeId, nowIso, readJson, writeJson } from "../utils/db.js";
 
 const router = Router();
@@ -25,7 +26,10 @@ const profileSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").optional(),
   username: usernameSchema.optional(),
   email: z.string().email("Please provide a valid email address").optional(),
-  location: z.string().optional(),
+  location: z
+    .string()
+    .optional()
+    .refine((value) => isValidParish(value), "Location must be a valid Jamaica parish"),
   phone: z.string().optional(),
 });
 

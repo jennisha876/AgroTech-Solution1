@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { resolveParish } from "../utils/parishes.js";
 
 const router = Router();
 
@@ -49,17 +50,30 @@ function buildAlerts(forecast) {
 }
 
 router.get("/current", async (req, res) => {
-  const location = String(req.query.location || "").trim() || "Nairobi";
+  const location = String(req.query.location || "").trim() || "Kingston";
 
   try {
-    const geoResp = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1`);
-    const geo = await geoResp.json();
+    let place = null;
+    const parish = resolveParish(location);
+    if (parish) {
+      place = {
+        name: parish.name,
+        country: "Jamaica",
+        latitude: parish.lat,
+        longitude: parish.lng,
+      };
+    } else {
+      const geoResp = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(`${location}, Jamaica`)}&count=5`);
+      const geo = await geoResp.json();
+      if (geo.results?.length) {
+        place = geo.results.find((result) => String(result.country || "").toLowerCase() === "jamaica") || geo.results[0];
+      }
+    }
 
-    if (!geo.results || !geo.results.length) {
+    if (!place) {
       return res.status(404).json({ message: "Location not found" });
     }
 
-    const place = geo.results[0];
     const forecastResp = await fetch(
       `https://api.open-meteo.com/v1/forecast?latitude=${place.latitude}&longitude=${place.longitude}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&daily=temperature_2m_max,precipitation_sum,wind_speed_10m_max&timezone=auto`
     );
