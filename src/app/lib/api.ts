@@ -221,6 +221,8 @@ export const api = {
     items: Array<{ product: Product; quantity: number }>;
     deliveryMethod: "delivery" | "pickup";
     address: string;
+    deliveryTime?: string;
+    paymentMethod?: string;
     payment: {
       status: "mock_success" | "requires_action" | "failed" | "succeeded";
       paymentIntentId?: string;
@@ -262,15 +264,26 @@ export const api = {
     return request<{ reviews: any[] }>("/reviews/mine");
   },
 
-  async adminOverview() {
-    return request<{
-      users: number;
-      buyers: number;
-      farmers: number;
-      admins: number;
-      orders: number;
-      reviews: number;
-      pendingResets: number;
-    }>("/admin/overview");
+  async listFarmerOrders() {
+    return request<{ orders: any[] }>("/orders/farmer");
+  },
+
+  async updateOrderStatus(orderId: string, status: string) {
+    return request<{ message: string }>(`/orders/${orderId}/status`, {
+      method: "PUT",
+      body: JSON.stringify({ status }),
+    });
+  },
+
+  async adminListUsers() {
+    return request<{ users: User[] }>("/admin/users");
+  },
+
+  async adminListOrders() {
+    return request<{ orders: any[] }>("/admin/orders");
+  },
+
+  async adminListReviews() {
+    return request<{ reviews: any[] }>("/admin/reviews");
   },
 };

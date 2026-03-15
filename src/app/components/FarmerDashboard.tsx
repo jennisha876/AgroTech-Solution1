@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { useAuth } from "../context/AuthContext";
+import { SubscriptionModal, SubscriptionLevel, SUBSCRIPTION_DETAILS } from "./SubscriptionModal";
 import { api, Crop, Training } from "../lib/api";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -19,7 +20,7 @@ import { JAMAICA_PARISHES } from "../lib/parishes";
 interface Order {
   id: string;
   total: number;
-  status: "pending" | "processing" | "shipped" | "delivered";
+  status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
   deliveryMethod: "delivery" | "pickup";
   address: string;
   deliveryTime?: string;

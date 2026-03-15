@@ -199,7 +199,7 @@ export function BuyerDashboard() {
       .bindPopup("Your delivery location");
 
     let maxDistance = 0;
-    const routingControls: any[] = [];
+    const routingControls: L.Routing.Control[] = [];
     cart.forEach((item) => {
       const source: [number, number] = [item.product.lat, item.product.lng];
       const distance = calculateDistance(source, buyerCoords);
