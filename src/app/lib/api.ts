@@ -6,16 +6,6 @@ export interface Training {
   status: string;
   createdAt: string;
 }
-  async listTrainings() {
-    return request<{ trainings: Training[] }>("/trainings");
-  },
-
-  async createTraining(payload: { type: "online" | "on-site"; date: string }) {
-    return request<{ training: Training }>("/trainings", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
-  },
 export type UserType = "farmer" | "buyer" | "admin";
 
 export interface User {
@@ -31,12 +21,6 @@ export interface User {
   subscriptionStatus?: "trial" | "active" | "expired";
   trialEndsAt?: string;
 }
-  async updateSubscription(level: "basic" | "diamond" | "platinum") {
-    return request<{ message: string; user: User }>("/users/subscription", {
-      method: "PUT",
-      body: JSON.stringify({ subscriptionLevel: level }),
-    });
-  },
 
 export interface Product {
   id: string;
