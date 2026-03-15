@@ -393,26 +393,6 @@ export function FarmerDashboard() {
           <Card><CardContent className="pt-6"><p className="text-sm text-slate-500">Ready</p><p className="text-2xl font-bold text-yellow-600">{stats.ready}</p></CardContent></Card>
           <Card><CardContent className="pt-6"><p className="text-sm text-slate-500">Area</p><p className="text-2xl font-bold text-blue-600">{stats.area}</p></CardContent></Card>
         </div>
-
-        {/* Subscription Info & Upgrade UI */}
-        {user?.userType === "farmer" && (
-          <Card className="mb-4">
-            <CardContent className="pt-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div>
-                <div className="font-semibold">Membership: <span className="capitalize">{user.subscriptionLevel || "not selected"}</span> ({user.subscriptionStatus || "pending"})</div>
-                {user.trialEndsAt && (
-                  <div className="text-sm text-muted-foreground">Trial ends: {new Date(user.trialEndsAt).toLocaleDateString()}</div>
-                )}
-                {isMembershipRequired && (
-                  <div className="text-sm text-amber-600 mt-1">Select any membership to unlock crops, training, learning, weather, and alerts.</div>
-                )}
-              </div>
-              <Button variant="outline" onClick={promptMembershipSelection}>
-                {upgrading ? "Upgrade" : "Manage Subscription"}
-              </Button>
-            </CardContent>
-          </Card>
-        )}
         <Tabs
           defaultValue="crops"
           value={activeTab}
@@ -635,6 +615,25 @@ export function FarmerDashboard() {
           </TabsContent>
 
           <TabsContent value="account" className="space-y-4">
+            {user?.userType === "farmer" && (
+              <Card>
+                <CardHeader><CardTitle>Membership</CardTitle></CardHeader>
+                <CardContent className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <div>
+                    <div className="font-semibold">Current Plan: <span className="capitalize">{user.subscriptionLevel || "not selected"}</span> ({user.subscriptionStatus || "pending"})</div>
+                    {user.trialEndsAt && (
+                      <div className="text-sm text-muted-foreground">Trial ends: {new Date(user.trialEndsAt).toLocaleDateString()}</div>
+                    )}
+                    {isMembershipRequired && (
+                      <div className="text-sm text-amber-600 mt-1">Select any membership to unlock crops, training, learning, weather, and alerts.</div>
+                    )}
+                  </div>
+                  <Button variant="outline" onClick={promptMembershipSelection}>
+                    {upgrading ? "Upgrade" : "Manage Subscription"}
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
             <Card>
               <CardHeader><CardTitle>Profile</CardTitle></CardHeader>
               <CardContent className="grid md:grid-cols-2 gap-3">

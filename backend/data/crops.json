@@ -1,28 +1,41 @@
-[ 
-	{
-		"id": "crop_test_farmer_growing_001",
-		"name": "Tomato",
-		"variety": "Roma",
-		"areaSize": 1.5,
-		"plantingDate": "2026-02-10",
-		"expectedHarvest": "2026-04-15",
-		"status": "growing",
-		"notes": "Weekly disease scouting active. Mulch applied.",
-		"createdAt": "2026-03-14T00:00:00.000Z",
-		"updatedAt": "2026-03-14T00:00:00.000Z",
-		"userId": "usr_test_farmer_001"
-	},
-	{
-		"id": "crop_test_farmer_ready_001",
-		"name": "Sweet Pepper",
-		"variety": "California Wonder",
-		"areaSize": 0.9,
-		"plantingDate": "2026-01-20",
-		"expectedHarvest": "2026-03-18",
-		"status": "ready",
-		"notes": "Fruit quality checks complete. Ready for harvest scheduling.",
-		"createdAt": "2026-03-14T00:00:00.000Z",
-		"updatedAt": "2026-03-14T00:00:00.000Z",
-		"userId": "usr_test_farmer_001"
-	}
+[
+  {
+    "id": "crop_test_farmer_growing_001",
+    "name": "Tomato",
+    "variety": "Roma",
+    "areaSize": 1.5,
+    "plantingDate": "2026-02-10",
+    "expectedHarvest": "2026-04-15",
+    "status": "growing",
+    "notes": "Weekly disease scouting active. Mulch applied.",
+    "createdAt": "2026-03-14T00:00:00.000Z",
+    "updatedAt": "2026-03-14T00:00:00.000Z",
+    "userId": "usr_test_farmer_001"
+  },
+  {
+    "id": "crop_test_farmer_ready_001",
+    "name": "Sweet Pepper",
+    "variety": "California Wonder",
+    "areaSize": 0.9,
+    "plantingDate": "2026-01-20",
+    "expectedHarvest": "2026-03-18",
+    "status": "ready",
+    "notes": "Fruit quality checks complete. Ready for harvest scheduling.",
+    "createdAt": "2026-03-14T00:00:00.000Z",
+    "updatedAt": "2026-03-14T00:00:00.000Z",
+    "userId": "usr_test_farmer_001"
+  },
+  {
+    "id": "crop_1773577957545_9404",
+    "name": "Yam",
+    "variety": "yam",
+    "areaSize": 20,
+    "plantingDate": "2026-03-15",
+    "expectedHarvest": "2026-03-31",
+    "status": "planted",
+    "notes": "",
+    "createdAt": "2026-03-15T12:32:37.545Z",
+    "updatedAt": "2026-03-15T12:32:37.545Z",
+    "userId": "usr_1773576958425_8806"
+  }
 ]

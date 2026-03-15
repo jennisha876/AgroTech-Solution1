@@ -10,3 +10,4 @@ pnpm-debug.log*
 .DS_Store
 .vite/
 node_modules/.vite/
+node_modules

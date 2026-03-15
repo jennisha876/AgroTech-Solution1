@@ -34,5 +34,20 @@
     "phone": "+1-876-555-1003",
     "createdAt": "2026-03-14T00:00:00.000Z",
     "updatedAt": "2026-03-14T00:00:00.000Z"
+  },
+  {
+    "id": "usr_1773576958425_8806",
+    "name": "sabrina smith",
+    "username": "sabrinasmith",
+    "email": "sabrinasmith2456@yahoo.com",
+    "passwordHash": "$2a$12$k9Kx0JC3fsJYs.kgEfeVUO06Q9EV9ANP8hg17qSqo/ve2uJouzAEm",
+    "userType": "farmer",
+    "location": "St. Catherine",
+    "phone": "18764368771",
+    "createdAt": "2026-03-15T12:15:58.425Z",
+    "updatedAt": "2026-03-15T12:15:58.425Z",
+    "subscriptionLevel": "basic",
+    "subscriptionStatus": "trial",
+    "trialEndsAt": "2026-04-14T12:15:58.424Z"
   }
 ]
