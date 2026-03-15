@@ -14,7 +14,7 @@ import { useState } from "react";
 
 export type SubscriptionLevel = "basic" | "diamond" | "platinum";
 
-const SUBSCRIPTION_DETAILS = {
+export const SUBSCRIPTION_DETAILS = {
   basic: {
     name: "Basic",
     description: "25 customers, 1 online training/month, monthly billing, 30 days free trial.",
@@ -24,7 +24,9 @@ const SUBSCRIPTION_DETAILS = {
       "Monthly billing",
       "30 days free trial",
     ],
-    price: "$9/mo",
+    priceUSD: 9,
+    priceJMD: 1400,
+    priceText: "$9/mo | J$1,400/mo",
     trial: 30,
   },
   diamond: {
@@ -36,7 +38,9 @@ const SUBSCRIPTION_DETAILS = {
       "Yearly billing",
       "30 days free trial",
     ],
-    price: "$99/yr",
+    priceUSD: 99,
+    priceJMD: 15500,
+    priceText: "$99/yr | J$15,500/yr",
     trial: 30,
   },
   platinum: {
@@ -49,7 +53,9 @@ const SUBSCRIPTION_DETAILS = {
       "Yearly billing",
       "30 days free trial",
     ],
-    price: "$199/yr",
+    priceUSD: 199,
+    priceJMD: 31000,
+    priceText: "$199/yr | J$31,000/yr",
     trial: 30,
   },
 };
@@ -57,9 +63,10 @@ const SUBSCRIPTION_DETAILS = {
 export function SubscriptionModal({ open, onClose, onSubscribe }: {
   open: boolean;
   onClose: () => void;
-  onSubscribe: (level: SubscriptionLevel) => void;
+  onSubscribe: (level: SubscriptionLevel, currency: "usd" | "jmd") => void;
 }) {
   const [selected, setSelected] = useState<SubscriptionLevel | null>(null);
+  const [currency, setCurrency] = useState<"usd" | "jmd">("usd");
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
       <DialogContent>
@@ -69,7 +76,12 @@ export function SubscriptionModal({ open, onClose, onSubscribe }: {
             Select a subscription to unlock more features. All plans include a 30-day free trial.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 mt-4">
+        <div className="flex gap-4 mb-2">
+          <span className="font-semibold">Currency:</span>
+          <Button variant={currency === "usd" ? "default" : "outline"} onClick={() => setCurrency("usd")}>USD</Button>
+          <Button variant={currency === "jmd" ? "default" : "outline"} onClick={() => setCurrency("jmd")}>JMD</Button>
+        </div>
+        <div className="grid gap-4 mt-2">
           {Object.entries(SUBSCRIPTION_DETAILS).map(([key, plan]) => (
             <div
               key={key}
@@ -81,7 +93,7 @@ export function SubscriptionModal({ open, onClose, onSubscribe }: {
                   <div className="font-bold text-lg">{plan.name}</div>
                   <div className="text-sm text-muted-foreground">{plan.description}</div>
                 </div>
-                <div className="font-bold text-green-700 text-xl">{plan.price}</div>
+                <div className="font-bold text-green-700 text-xl">{plan.priceText}</div>
               </div>
               <ul className="mt-2 ml-4 list-disc text-sm">
                 {plan.details.map((d, i) => <li key={i}>{d}</li>)}
@@ -90,7 +102,7 @@ export function SubscriptionModal({ open, onClose, onSubscribe }: {
           ))}
         </div>
         <DialogFooter>
-          <Button disabled={!selected} onClick={() => selected && onSubscribe(selected)} className="w-full bg-green-600 hover:bg-green-700">Continue</Button>
+          <Button disabled={!selected} onClick={() => selected && onSubscribe(selected, currency)} className="w-full bg-green-600 hover:bg-green-700">Continue</Button>
           <DialogClose asChild>
             <Button variant="outline" className="w-full mt-2">Cancel</Button>
           </DialogClose>

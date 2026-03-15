@@ -6,7 +6,7 @@ import { Leaf, TrendingUp, ShoppingCart, Shield, ArrowRight, CloudRain, Truck } 
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 
 export function Home() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   return (
     <div className="min-h-screen">
@@ -34,6 +34,23 @@ export function Home() {
           </nav>
         </div>
       </header>
+
+      {/* Show subscription info if logged in as farmer */}
+      {user?.userType === 'farmer' && (
+        <section className="bg-yellow-50 py-4 border-b">
+          <div className="container mx-auto px-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+            <div>
+              <span className="font-semibold">Your Plan:</span> <span className="capitalize">{user.subscriptionLevel || 'basic'}</span> ({user.subscriptionStatus || 'trial'})
+              {user.trialEndsAt && (
+                <span className="ml-2 text-xs text-muted-foreground">Trial ends: {new Date(user.trialEndsAt).toLocaleDateString()}</span>
+              )}
+            </div>
+            <Link to="/dashboard">
+              <Button variant="outline" className="bg-green-600 text-white hover:bg-green-700">Manage Subscription</Button>
+            </Link>
+          </div>
+        </section>
+      )}
 
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-green-50 to-emerald-100 py-20">

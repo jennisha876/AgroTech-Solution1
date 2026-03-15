@@ -1,0 +1,10 @@
+[
+  {
+    "id": "train_test_001",
+    "userId": "usr_test_farmer_001",
+    "type": "online",
+    "date": "2026-03-01",
+    "status": "completed",
+    "createdAt": "2026-03-01T10:00:00.000Z"
+  }
+]

@@ -336,6 +336,20 @@ export function Dashboard() {
         </div>
       </header>
 
+      {/* Show subscription info if farmer */}
+      {user.userType === 'farmer' && (
+        <section className="bg-yellow-50 py-4 border-b">
+          <div className="container mx-auto px-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+            <div>
+              <span className="font-semibold">Your Plan:</span> <span className="capitalize">{user.subscriptionLevel || 'basic'}</span> ({user.subscriptionStatus || 'trial'})
+              {user.trialEndsAt && (
+                <span className="ml-2 text-xs text-muted-foreground">Trial ends: {new Date(user.trialEndsAt).toLocaleDateString()}</span>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
+
       <div className="container mx-auto px-4 py-8">
         {/* Stats */}
         {user.userType === 'farmer' ? (

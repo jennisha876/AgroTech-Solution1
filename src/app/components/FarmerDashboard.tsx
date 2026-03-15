@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { useAuth } from "../context/AuthContext";
-import { api, Crop } from "../lib/api";
+import { SubscriptionModal, SubscriptionLevel, SUBSCRIPTION_DETAILS } from "./SubscriptionModal";
+import { api, Crop, Training } from "../lib/api";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -26,14 +27,21 @@ const emptyForm = {
   notes: "",
 };
 
-export function FarmerDashboard() {
   const { user, logout, updateProfile, changePassword, switchRole } = useAuth();
+  const [showSubscription, setShowSubscription] = useState(false);
+  const [upgrading, setUpgrading] = useState(false);
   const navigate = useNavigate();
 
   const [crops, setCrops] = useState<Crop[]>([]);
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  // Training session state
+  const [trainings, setTrainings] = useState<Training[]>([]);
+  const [booking, setBooking] = useState(false);
+  const [trainingType, setTrainingType] = useState<"online" | "on-site">("online");
+  const [trainingDate, setTrainingDate] = useState("");
 
   const [weatherLocation, setWeatherLocation] = useState(user?.location || "Kingston");
   const [weather, setWeather] = useState<{
@@ -67,17 +75,18 @@ export function FarmerDashboard() {
   useEffect(() => {
     const load = async () => {
       try {
-        const [cropResponse, weatherResponse] = await Promise.all([
+        const [cropResponse, weatherResponse, trainingResponse] = await Promise.all([
           api.listCrops(),
           api.getWeather(weatherLocation),
+          api.listTrainings(),
         ]);
         setCrops(cropResponse.crops);
         setWeather(weatherResponse);
+        setTrainings(trainingResponse.trainings);
       } catch (error) {
         toast.error((error as Error).message || "Failed loading dashboard data");
       }
     };
-
     load();
   }, []);
 
@@ -100,6 +109,77 @@ export function FarmerDashboard() {
     }
   };
 
+  // Subscription enforcement logic
+  let cropLimit = Infinity;
+  let trainingLimit = Infinity;
+  let showTechGro = false;
+  if (user?.userType === "farmer") {
+    switch (user.subscriptionLevel) {
+      case "basic":
+        cropLimit = 25;
+        trainingLimit = 1;
+        break;
+      case "diamond":
+        cropLimit = 50;
+        trainingLimit = 3;
+        break;
+      case "platinum":
+        cropLimit = Infinity;
+        trainingLimit = Infinity;
+        showTechGro = true;
+        break;
+      default:
+        cropLimit = 25;
+        trainingLimit = 1;
+    }
+  }
+
+  // Count this month's training sessions
+  const now = new Date();
+  const thisMonth = now.toISOString().slice(0, 7);
+  const monthlyTrainings = trainings.filter(t => t.date.slice(0, 7) === thisMonth);
+  const onlineCount = monthlyTrainings.filter(t => t.type === "online").length;
+  const onSiteCount = monthlyTrainings.filter(t => t.type === "on-site").length;
+  // Book a training session
+  const handleBookTraining = async () => {
+    if (!trainingDate) {
+      toast.error("Select a date for your training session.");
+      return;
+    }
+    // Enforce limits
+    if (user?.subscriptionLevel === "basic" && onlineCount >= 1) {
+      toast.error("Basic plan: 1 online training/month. Upgrade for more.");
+      setBooking(false);
+      setShowSubscription(true);
+      setUpgrading(true);
+      return;
+    }
+    if (user?.subscriptionLevel === "diamond") {
+      if (trainingType === "online" && onlineCount >= 2) {
+        toast.error("Diamond: 2 online/month. Upgrade for more.");
+        setBooking(false);
+        setShowSubscription(true);
+        setUpgrading(true);
+        return;
+      }
+      if (trainingType === "on-site" && onSiteCount >= 1) {
+        toast.error("Diamond: 1 on-site/month. Upgrade for more.");
+        setBooking(false);
+        setShowSubscription(true);
+        setUpgrading(true);
+        return;
+      }
+    }
+    setBooking(false);
+    try {
+      const res = await api.createTraining({ type: trainingType, date: trainingDate });
+      setTrainings(prev => [res.training, ...prev]);
+      toast.success("Training session booked!");
+    } catch (e) {
+      toast.error("Could not book training session.");
+    }
+  };
+
   const submitCrop = async () => {
     if (!form.name.trim()) {
       toast.error("Crop name is required");
@@ -107,6 +187,12 @@ export function FarmerDashboard() {
     }
     if (form.areaSize < 0) {
       toast.error("Area cannot be negative");
+      return;
+    }
+    if (user?.userType === "farmer" && crops.length >= cropLimit) {
+      toast.error("You have reached your crop/customer limit for your subscription. Upgrade to add more.");
+      setShowSubscription(true);
+      setUpgrading(true);
       return;
     }
 
@@ -221,6 +307,48 @@ export function FarmerDashboard() {
         </div>
       </header>
 
+      <SubscriptionModal
+        open={showSubscription}
+        onClose={() => setShowSubscription(false)}
+        onSubscribe={async (level: SubscriptionLevel, currency: "usd" | "jmd") => {
+          setShowSubscription(false);
+          setUpgrading(false);
+          // Only require payment if not on trial or upgrading from trial
+          if (user?.subscriptionStatus !== "trial" || user?.trialEndsAt && new Date(user.trialEndsAt) < new Date()) {
+            // Determine amount
+            const plan = SUBSCRIPTION_DETAILS[level];
+            let amount = 0;
+            if (currency === "usd") {
+              amount = plan.priceUSD;
+            } else {
+              amount = plan.priceJMD;
+            }
+            if (!amount) {
+              toast.error("Could not determine plan price.");
+              return;
+            }
+            try {
+              const payment = await api.createPaymentIntent(amount, currency);
+              if (payment.status === "mock_success" || payment.status === "succeeded") {
+                await api.updateSubscription(level);
+                toast.success(`Upgraded to ${level.charAt(0).toUpperCase() + level.slice(1)}! Payment successful.`);
+              } else {
+                toast.error("Payment failed or requires action. Please try again.");
+              }
+            } catch (e) {
+              toast.error("Payment failed. Please try again.");
+            }
+          } else {
+            // On trial, allow upgrade without payment
+            try {
+              await api.updateSubscription(level);
+              toast.success(`Upgraded to ${level.charAt(0).toUpperCase() + level.slice(1)}! Please refresh to see new limits.`);
+            } catch (e) {
+              toast.error("Failed to update subscription. Please try again.");
+            }
+          }
+        }}
+      />
       <div className="container mx-auto px-4 py-8 space-y-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card><CardContent className="pt-6"><p className="text-sm text-slate-500">Total Crops</p><p className="text-2xl font-bold">{stats.total}</p></CardContent></Card>
@@ -229,12 +357,84 @@ export function FarmerDashboard() {
           <Card><CardContent className="pt-6"><p className="text-sm text-slate-500">Area</p><p className="text-2xl font-bold text-blue-600">{stats.area}</p></CardContent></Card>
         </div>
 
+        {/* Subscription Info & Upgrade UI */}
+        {user?.userType === "farmer" && (
+          <Card className="mb-4">
+            <CardContent className="pt-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <div className="font-semibold">Membership: <span className="capitalize">{user.subscriptionLevel || "basic"}</span> ({user.subscriptionStatus || "trial"})</div>
+                {user.trialEndsAt && (
+                  <div className="text-sm text-muted-foreground">Trial ends: {new Date(user.trialEndsAt).toLocaleDateString()}</div>
+                )}
+              </div>
+              <Button variant="outline" onClick={() => { setShowSubscription(true); setUpgrading(true); }}>
+                {upgrading ? "Upgrade" : "Manage Subscription"}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
         <Tabs defaultValue="crops">
           <TabsList>
             <TabsTrigger value="crops">Crops</TabsTrigger>
+            <TabsTrigger value="trainings">Training</TabsTrigger>
             <TabsTrigger value="weather">Weather</TabsTrigger>
             <TabsTrigger value="account">Account</TabsTrigger>
           </TabsList>
+          <TabsContent value="trainings" className="space-y-4">
+            <Card>
+              <CardHeader><CardTitle>Training Sessions</CardTitle></CardHeader>
+              <CardContent>
+                <div className="mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                  <div>
+                    <span className="font-semibold">This month:</span> {onlineCount} online / {onSiteCount} on-site
+                    <span className="ml-2 text-xs text-muted-foreground">(Plan limit: {user?.subscriptionLevel === "basic" ? "1 online" : user?.subscriptionLevel === "diamond" ? "2 online, 1 on-site" : "Unlimited"})</span>
+                  </div>
+                  <Button onClick={() => setBooking(true)} disabled={user?.subscriptionLevel === "basic" ? onlineCount >= 1 : user?.subscriptionLevel === "diamond" ? (onlineCount >= 2 && trainingType === "online") || (onSiteCount >= 1 && trainingType === "on-site") : false}>
+                    Book Training
+                  </Button>
+                </div>
+                {booking && (
+                  <div className="mb-4 flex flex-col md:flex-row gap-2 items-end">
+                    <Label>Type</Label>
+                    <Select value={trainingType} onValueChange={v => setTrainingType(v as "online" | "on-site") }>
+                      <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="online">Online</SelectItem>
+                        <SelectItem value="on-site">On-site</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Label>Date</Label>
+                    <Input type="date" value={trainingDate} onChange={e => setTrainingDate(e.target.value)} className="w-40" />
+                    <Button onClick={handleBookTraining} className="bg-green-600 hover:bg-green-700">Confirm</Button>
+                    <Button variant="outline" onClick={() => setBooking(false)}>Cancel</Button>
+                  </div>
+                )}
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-sm">
+                    <thead>
+                      <tr>
+                        <th className="text-left">Date</th>
+                        <th className="text-left">Type</th>
+                        <th className="text-left">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {trainings.length === 0 && (
+                        <tr><td colSpan={3} className="text-center text-muted-foreground">No training sessions yet.</td></tr>
+                      )}
+                      {trainings.map(t => (
+                        <tr key={t.id}>
+                          <td>{t.date}</td>
+                          <td className="capitalize">{t.type}</td>
+                          <td>{t.status}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           <TabsContent value="crops" className="space-y-4">
             <Card>

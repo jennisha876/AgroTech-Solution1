@@ -1,3 +1,21 @@
+export interface Training {
+  id: string;
+  userId: string;
+  type: "online" | "on-site";
+  date: string;
+  status: string;
+  createdAt: string;
+}
+  async listTrainings() {
+    return request<{ trainings: Training[] }>("/trainings");
+  },
+
+  async createTraining(payload: { type: "online" | "on-site"; date: string }) {
+    return request<{ training: Training }>("/trainings", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
 export type UserType = "farmer" | "buyer" | "admin";
 
 export interface User {
@@ -183,10 +201,10 @@ export const api = {
     });
   },
 
-  async createPaymentIntent(amount: number) {
+  async createPaymentIntent(amount: number, currency: "usd" | "jmd") {
     return request<{
       provider: string;
-      status: "mock_success" | "requires_action" | "failed";
+      status: "mock_success" | "requires_action" | "failed" | "succeeded";
       amount: number;
       currency: string;
       paymentIntentId: string;
@@ -194,7 +212,7 @@ export const api = {
       message?: string;
     }>("/payments/create-intent", {
       method: "POST",
-      body: JSON.stringify({ amount, currency: "usd" }),
+      body: JSON.stringify({ amount, currency }),
     });
   },
 

@@ -11,6 +11,7 @@ import paymentsRoutes from "./routes/payments.js";
 import aiRoutes from "./routes/ai.js";
 import reviewsRoutes from "./routes/reviews.js";
 import adminRoutes from "./routes/admin.js";
+import trainingsRoutes from "./routes/trainings.js";
 
 const app = express();
 const port = Number(process.env.PORT || 4000);
@@ -33,6 +34,7 @@ app.use("/api/payments", paymentsRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/reviews", reviewsRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/trainings", trainingsRoutes);
 
 app.use((_, res) => {
   res.status(404).json({ message: "Not found" });
