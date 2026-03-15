@@ -66,6 +66,31 @@ function getBuyerCoords(location?: string): [number, number] {
   return match ? parishCoordinates[match] : parishCoordinates["Kingston"];
 }
 
+function calculateDistance(coord1: [number, number], coord2: [number, number]): number {
+  const [lat1, lon1] = coord1;
+  const [lat2, lon2] = coord2;
+  const R = 6371; // Radius of the Earth in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+function estimateDeliveryTime(distance: number): string {
+  // Assume average speed of 30 km/h for delivery
+  const timeHours = distance / 30;
+  const timeMinutes = Math.round(timeHours * 60);
+  if (timeMinutes < 60) {
+    return `${timeMinutes} min`;
+  }
+  const hours = Math.floor(timeMinutes / 60);
+  const mins = timeMinutes % 60;
+  return `${hours}h ${mins}m`;
+}
+
 export function BuyerDashboard() {
   const { user, logout, updateProfile, changePassword, switchRole } = useAuth();
   const navigate = useNavigate();
@@ -157,17 +182,34 @@ export function BuyerDashboard() {
       attribution: "&copy; OpenStreetMap contributors",
     }).addTo(map);
 
+    // Add buyer marker
     L.marker(buyerCoords, { icon: markerIcon })
       .addTo(map)
       .bindPopup("Your delivery location");
 
+    let maxDistance = 0;
     cart.forEach((item) => {
       const source: [number, number] = [item.product.lat, item.product.lng];
+      const distance = calculateDistance(source, buyerCoords);
+      maxDistance = Math.max(maxDistance, distance);
+
+      // Add product marker
       L.marker(source, { icon: markerIcon })
         .addTo(map)
-        .bindPopup(`${item.product.name} from ${item.product.location}`);
-      L.polyline([source, buyerCoords], { color: "green" }).addTo(map);
+        .bindPopup(`${item.product.name} from ${item.product.location}<br>Distance: ${distance.toFixed(1)} km`);
+
+      // Add route line (simplified as polyline)
+      L.polyline([source, buyerCoords], { color: "blue", weight: 3, opacity: 0.7 }).addTo(map);
     });
+
+    // Fit map to show all markers
+    if (cart.length > 0) {
+      const group = new L.featureGroup([
+        L.marker(buyerCoords),
+        ...cart.map(item => L.marker([item.product.lat, item.product.lng]))
+      ]);
+      map.fitBounds(group.getBounds().pad(0.1));
+    }
 
     return () => {
       if (mapInstanceRef.current) {
@@ -299,8 +341,7 @@ export function BuyerDashboard() {
       <header className="bg-card border-b sticky top-0 z-20">
         <div className="container mx-auto px-4 py-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-2">
-            <Leaf className="h-8 w-8 text-green-600" />
-            <span className="text-xl font-semibold">SmithAgro</span>
+            <img src="/images/logomain.png" alt="SmithAgro" className="h-8 w-auto object-contain" />
             <Badge variant="outline">Buyer</Badge>
           </div>
 
@@ -419,6 +460,31 @@ export function BuyerDashboard() {
                   <p className="text-xs text-muted-foreground mt-2">Map shows where each product in your cart is sourced from.</p>
                 </CardContent>
               </Card>
+
+              {cart.length > 0 && (
+                <Card>
+                  <CardHeader><CardTitle>Delivery Estimate</CardTitle></CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {cart.map((item) => {
+                        const distance = calculateDistance([item.product.lat, item.product.lng], buyerCoords);
+                        return (
+                          <div key={item.product.id} className="flex justify-between text-sm">
+                            <span>{item.product.name} from {item.product.location}</span>
+                            <span>{distance.toFixed(1)} km • {estimateDeliveryTime(distance)}</span>
+                          </div>
+                        );
+                      })}
+                      <div className="border-t pt-2 mt-2">
+                        <div className="flex justify-between font-medium">
+                          <span>Estimated Delivery Time</span>
+                          <span>{estimateDeliveryTime(Math.max(...cart.map(item => calculateDistance([item.product.lat, item.product.lng], buyerCoords))))}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               <Card>
                 <CardHeader><CardTitle>Recent Orders (After Purchase)</CardTitle></CardHeader>

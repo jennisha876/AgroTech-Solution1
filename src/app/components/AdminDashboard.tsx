@@ -49,8 +49,7 @@ export function AdminDashboard() {
       <header className="bg-card border-b sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Shield className="h-8 w-8 text-emerald-700" />
-            <span className="text-xl font-semibold">AgroTechSolution Admin</span>
+            <img src="/images/logomain.png" alt="AgroTechSolution" className="h-8 w-auto object-contain" />
             <Badge variant="outline">Admin</Badge>
           </div>
           <div className="flex items-center gap-2">

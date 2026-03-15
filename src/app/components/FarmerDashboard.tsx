@@ -320,8 +320,7 @@ export function FarmerDashboard() {
       <header className="bg-card border-b sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Leaf className="h-8 w-8 text-green-600" />
-            <span className="text-xl font-semibold">SmithAgro</span>
+            <img src="/images/logomain.png" alt="SmithAgro" className="h-8 w-auto object-contain" />
             <Badge variant="outline">Farmer</Badge>
           </div>
           <div className="flex items-center gap-3">
