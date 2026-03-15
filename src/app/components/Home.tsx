@@ -4,42 +4,18 @@ import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Leaf, TrendingUp, ShoppingCart, Shield, ArrowRight, CloudRain, Truck } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
+import { MarketingFooter, MarketingHeader } from "./MarketingShell";
 
 export function Home() {
   const { isAuthenticated, user } = useAuth();
 
   return (
     <div className="min-h-screen">
-      {/* Header */}
-      <header className="border-b bg-white sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Link to="/" aria-label="Go to homepage">
-              <img src="/images/logomain.png" alt="AgroTechSolution" width={300} height={80} className="h-[80px] w-[300px] object-contain" />
-            </Link>
-          </div>
-          <nav className="flex items-center gap-4">
-            {isAuthenticated ? (
-              <Link to="/dashboard">
-                <Button className="bg-green-600 hover:bg-green-700">Go to Dashboard</Button>
-              </Link>
-            ) : (
-              <>
-                <Link to="/login">
-                  <Button variant="ghost">Login</Button>
-                </Link>
-                <Link to="/register">
-                  <Button className="bg-green-600 hover:bg-green-700">Get Started</Button>
-                </Link>
-              </>
-            )}
-          </nav>
-        </div>
-      </header>
+      <MarketingHeader />
 
       {/* Show subscription info if logged in as farmer */}
       {user?.userType === 'farmer' && (
-        <section className="bg-yellow-50 py-4 border-b">
+        <section className="border-b bg-green-50 py-4">
           <div className="container mx-auto px-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
             <div>
               <span className="font-semibold">Your Plan:</span> <span className="capitalize">{user.subscriptionLevel || 'basic'}</span> ({user.subscriptionStatus || 'trial'})
@@ -55,14 +31,14 @@ export function Home() {
       )}
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-green-50 to-emerald-100 py-20">
+      <section className="bg-gradient-to-br from-green-50 to-white py-20">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <h1 className="text-5xl font-bold mb-6 text-gray-900">
+              <h1 className="mb-6 text-5xl font-bold text-black">
                 Connecting Farms to Tables
               </h1>
-              <p className="text-xl text-gray-600 mb-8">
+              <p className="mb-8 text-xl text-black/70">
                 SmithAgro is your complete agricultural marketplace. Farmers get smart crop 
                 management and weather insights. Buyers get fresh, quality produce delivered 
                 directly from the farm.
@@ -96,7 +72,7 @@ export function Home() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4">Why Choose SmithAgro?</h2>
-            <p className="text-xl text-gray-600">
+            <p className="text-xl text-black/70">
               The only platform you need for modern agriculture and fresh produce
             </p>
           </div>
@@ -114,7 +90,7 @@ export function Home() {
               <Card>
                 <CardHeader>
                   <div className="flex items-center gap-3">
-                    <CloudRain className="h-5 w-5 text-blue-600" />
+                    <CloudRain className="h-5 w-5 text-green-600" />
                     <CardTitle className="text-lg">Weather Intelligence</CardTitle>
                   </div>
                   <CardDescription>
@@ -127,7 +103,7 @@ export function Home() {
               <Card>
                 <CardHeader>
                   <div className="flex items-center gap-3">
-                    <TrendingUp className="h-5 w-5 text-purple-600" />
+                    <TrendingUp className="h-5 w-5 text-green-600" />
                     <CardTitle className="text-lg">Smart Crop Management</CardTitle>
                   </div>
                   <CardDescription>
@@ -154,8 +130,8 @@ export function Home() {
             {/* For Buyers */}
             <div className="space-y-6">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <ShoppingCart className="h-6 w-6 text-blue-600" />
+                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                  <ShoppingCart className="h-6 w-6 text-green-600" />
                 </div>
                 <h3 className="text-2xl font-bold">For Buyers</h3>
               </div>
@@ -176,7 +152,7 @@ export function Home() {
               <Card>
                 <CardHeader>
                   <div className="flex items-center gap-3">
-                    <Truck className="h-5 w-5 text-orange-600" />
+                    <Truck className="h-5 w-5 text-green-600" />
                     <CardTitle className="text-lg">Easy Delivery & Tracking</CardTitle>
                   </div>
                   <CardDescription>
@@ -189,7 +165,7 @@ export function Home() {
               <Card>
                 <CardHeader>
                   <div className="flex items-center gap-3">
-                    <Shield className="h-5 w-5 text-purple-600" />
+                    <Shield className="h-5 w-5 text-green-600" />
                     <CardTitle className="text-lg">Quality Guaranteed</CardTitle>
                   </div>
                   <CardDescription>
@@ -204,7 +180,7 @@ export function Home() {
       </section>
 
       {/* How It Works */}
-      <section className="py-20 bg-gray-50">
+      <section className="bg-white py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4">How It Works</h2>
@@ -256,10 +232,10 @@ export function Home() {
 
             {/* Buyers Flow */}
             <div>
-              <h3 className="text-2xl font-bold mb-8 text-blue-600">For Buyers</h3>
+              <h3 className="text-2xl font-bold mb-8 text-green-700">For Buyers</h3>
               <div className="space-y-6">
                 <div className="flex gap-4">
-                  <div className="flex-shrink-0 w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-green-600 text-white flex items-center justify-center font-bold">
                     1
                   </div>
                   <div>
@@ -271,7 +247,7 @@ export function Home() {
                   </div>
                 </div>
                 <div className="flex gap-4">
-                  <div className="flex-shrink-0 w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-green-600 text-white flex items-center justify-center font-bold">
                     2
                   </div>
                   <div>
@@ -283,7 +259,7 @@ export function Home() {
                   </div>
                 </div>
                 <div className="flex gap-4">
-                  <div className="flex-shrink-0 w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-green-600 text-white flex items-center justify-center font-bold">
                     3
                   </div>
                   <div>
@@ -313,25 +289,25 @@ export function Home() {
             </div>
             <div>
               <h2 className="text-4xl font-bold mb-6">Trusted by Thousands</h2>
-              <p className="text-xl text-gray-600 mb-8">
+              <p className="mb-8 text-xl text-black/70">
                 Join our growing community of farmers and buyers revolutionizing agriculture.
               </p>
               <div className="grid grid-cols-2 gap-8">
                 <div>
                   <div className="text-4xl font-bold text-green-600 mb-2">2,500+</div>
-                  <div className="text-gray-600">Active Farmers</div>
+                  <div className="text-black/70">Active Farmers</div>
                 </div>
                 <div>
                   <div className="text-4xl font-bold text-green-600 mb-2">10K+</div>
-                  <div className="text-gray-600">Happy Buyers</div>
+                  <div className="text-black/70">Happy Buyers</div>
                 </div>
                 <div>
                   <div className="text-4xl font-bold text-green-600 mb-2">50K+</div>
-                  <div className="text-gray-600">Orders Delivered</div>
+                  <div className="text-black/70">Orders Delivered</div>
                 </div>
                 <div>
                   <div className="text-4xl font-bold text-green-600 mb-2">100%</div>
-                  <div className="text-gray-600">Fresh Guarantee</div>
+                  <div className="text-black/70">Fresh Guarantee</div>
                 </div>
               </div>
             </div>
@@ -355,48 +331,7 @@ export function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-gray-300 py-12">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <Leaf className="h-6 w-6 text-green-400" />
-                <span className="font-semibold text-white">SmithAgro</span>
-              </div>
-              <p className="text-sm">
-                Connecting farms to tables with smart technology and fresh produce.
-              </p>
-            </div>
-            <div>
-              <h3 className="font-semibold text-white mb-4">For Farmers</h3>
-              <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white">Crop Management</a></li>
-                <li><a href="#" className="hover:text-white">Weather Alerts</a></li>
-                <li><a href="#" className="hover:text-white">Sell Produce</a></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold text-white mb-4">For Buyers</h3>
-              <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white">Shop Produce</a></li>
-                <li><a href="#" className="hover:text-white">Track Orders</a></li>
-                <li><a href="#" className="hover:text-white">Delivery Info</a></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold text-white mb-4">Company</h3>
-              <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white">About Us</a></li>
-                <li><a href="#" className="hover:text-white">Contact</a></li>
-                <li><a href="#" className="hover:text-white">Help Center</a></li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm">
-            <p>&copy; 2026 SmithAgro. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
+      <MarketingFooter />
     </div>
   );
 }

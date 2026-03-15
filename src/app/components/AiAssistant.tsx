@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { MessageCircle, Send } from "lucide-react";
+import { ImagePlus, MessageCircle, Send, X } from "lucide-react";
 import { api, AiMessage } from "../lib/api";
 
 interface ChatItem {
@@ -13,9 +13,15 @@ interface ChatItem {
 export function AiAssistant() {
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState("");
+  const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
+  const [imageName, setImageName] = useState("");
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState<ChatItem[]>([
-    { role: "assistant", content: "I am TechGro. I can help with crop disease detection, treatment options, crop quality checks, and weather-risk decisions." },
+    {
+      role: "assistant",
+      content:
+        "I am TechGro. I can help with crop disease detection, treatment options, crop quality checks, and weather-risk decisions. Upload a crop image if you want me to scan it and suggest likely issues.",
+    },
   ]);
 
   const quickPrompts = [
@@ -25,24 +31,54 @@ export function AiAssistant() {
   ];
 
   const sendMessage = async () => {
-    if (!message.trim() || loading) {
+    if ((!message.trim() && !imageDataUrl) || loading) {
       return;
     }
 
-    const nextUserMessage = { role: "user" as const, content: message.trim() };
-    setMessages((prev) => [...prev, nextUserMessage]);
+    const baseMessage = message.trim() || "Please analyze this uploaded crop image and scan for disease, damage, or quality issues. Suggest likely causes and treatment steps.";
+    const nextUserMessage = {
+      role: "user" as const,
+      content: imageDataUrl ? `${baseMessage}\n[Image attached: ${imageName || "crop-image"}]` : baseMessage,
+    };
+    const conversation = [...messages, nextUserMessage];
+
+    setMessages(conversation);
     setMessage("");
     setLoading(true);
 
     try {
-      const history: AiMessage[] = messages.slice(-10).map((m) => ({ role: m.role, content: m.content }));
-      const response = await api.askAi(nextUserMessage.content, history);
+      const history: AiMessage[] = conversation.slice(-10, -1).map((m) => ({ role: m.role, content: m.content }));
+      const response = await api.askAi(baseMessage, history, imageDataUrl || undefined);
       setMessages((prev) => [...prev, { role: "assistant", content: response.reply }]);
+      setImageDataUrl(null);
+      setImageName("");
     } catch {
       setMessages((prev) => [...prev, { role: "assistant", content: "I could not answer right now. Please try again." }]);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleImageUpload = async (file: File | null) => {
+    if (!file) {
+      return;
+    }
+
+    const maxBytes = 2 * 1024 * 1024;
+    if (file.size > maxBytes) {
+      setMessages((prev) => [...prev, { role: "assistant", content: "Image is too large. Please upload an image up to 2MB." }]);
+      return;
+    }
+
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ""));
+      reader.onerror = () => reject(new Error("Could not read image"));
+      reader.readAsDataURL(file);
+    });
+
+    setImageDataUrl(dataUrl);
+    setImageName(file.name);
   };
 
   return (
@@ -83,6 +119,21 @@ export function AiAssistant() {
               ))}
             </div>
             <div className="flex gap-2">
+              <div className="flex items-center">
+                <label className="cursor-pointer inline-flex items-center justify-center h-10 w-10 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null;
+                      handleImageUpload(file);
+                      e.currentTarget.value = "";
+                    }}
+                  />
+                  <ImagePlus className="h-4 w-4" />
+                </label>
+              </div>
               <Input
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
@@ -93,10 +144,30 @@ export function AiAssistant() {
                   }
                 }}
               />
-              <Button onClick={sendMessage} disabled={loading || !message.trim()}>
+              <Button onClick={sendMessage} disabled={loading || (!message.trim() && !imageDataUrl)}>
                 <Send className="h-4 w-4" />
               </Button>
             </div>
+            {imageDataUrl && (
+              <div className="border rounded-md p-2 space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground truncate">{imageName}</p>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2"
+                    onClick={() => {
+                      setImageDataUrl(null);
+                      setImageName("");
+                    }}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+                <img src={imageDataUrl} alt="Selected upload" className="max-h-28 w-auto rounded border" />
+              </div>
+            )}
           </CardContent>
         </Card>
       ) : (

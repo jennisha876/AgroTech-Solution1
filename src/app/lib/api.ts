@@ -198,7 +198,7 @@ export const api = {
     });
   },
 
-  async createPaymentIntent(amount: number, currency: "usd" | "jmd") {
+  async createPaymentIntent(amount: number, currency: "usd" | "jmd" = "usd") {
     return request<{
       provider: string;
       status: "mock_success" | "requires_action" | "failed" | "succeeded";
@@ -222,7 +222,7 @@ export const api = {
     deliveryMethod: "delivery" | "pickup";
     address: string;
     payment: {
-      status: "mock_success" | "requires_action" | "failed";
+      status: "mock_success" | "requires_action" | "failed" | "succeeded";
       paymentIntentId?: string;
       provider: string;
     };
@@ -233,10 +233,21 @@ export const api = {
     });
   },
 
-  async askAi(message: string, messages: AiMessage[] = []) {
+  async askAi(message: string, messages: AiMessage[] = [], imageDataUrl?: string) {
     return request<{ reply: string }>("/ai/chat", {
       method: "POST",
-      body: JSON.stringify({ message, messages }),
+      body: JSON.stringify({ message, messages, imageDataUrl }),
+    });
+  },
+
+  async listTrainings() {
+    return request<{ trainings: Training[] }>("/trainings");
+  },
+
+  async createTraining(payload: { type: "online" | "on-site"; date: string }) {
+    return request<{ training: Training }>("/trainings", {
+      method: "POST",
+      body: JSON.stringify(payload),
     });
   },
 

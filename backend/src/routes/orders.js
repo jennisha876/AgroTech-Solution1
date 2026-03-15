@@ -24,7 +24,7 @@ const orderSchema = z.object({
   deliveryMethod: z.enum(["delivery", "pickup"]),
   address: z.string().min(1),
   payment: z.object({
-    status: z.enum(["mock_success", "requires_action", "failed"]),
+    status: z.enum(["mock_success", "requires_action", "failed", "succeeded"]),
     paymentIntentId: z.string().optional(),
     provider: z.string(),
   }),
