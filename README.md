@@ -123,6 +123,53 @@ Current app references:
 - `npm run dev:backend` -> backend dev server
 - `npm run dev:all` -> run frontend + backend together
 - `npm run build` -> frontend production build
+- `npm run build:all` -> build frontend and prepare backend dependencies
+- `npm run start` -> run backend (serves API and built frontend)
+
+## Deployment (Single Service)
+
+This project is now set up to run as one service in production:
+- Backend serves API under `/api/*`
+- Backend also serves frontend static files from `dist/`
+
+### Deploy Steps
+
+1. Install dependencies:
+
+```bash
+npm install
+npm --prefix backend install
+```
+
+2. Build frontend:
+
+```bash
+npm run build
+```
+
+3. Configure backend environment (`backend/.env`):
+- `PORT=4000` (or platform port)
+- `JWT_SECRET=...`
+- `FRONTEND_ORIGIN=https://your-domain.com` (or comma-separated list)
+
+4. Start app:
+
+```bash
+npm run start
+```
+
+### Quick Platform Notes
+
+- Render/Railway/Fly.io:
+  - Build command: `npm install && npm --prefix backend install && npm run build`
+  - Start command: `npm run start`
+
+- Vercel/Netlify (frontend-only) is not recommended for this full-stack setup unless backend is deployed separately.
+
+## Farmer Alerts Behavior
+
+- Alerts appear when rainfall, temperature, or wind thresholds are triggered.
+- If no severe condition is detected, a low-severity advisory alert is shown so the farmer still has monitoring guidance.
 
 ## Notes
 

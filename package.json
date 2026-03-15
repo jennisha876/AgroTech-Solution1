@@ -5,10 +5,12 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
+    "build:all": "npm run build && npm --prefix backend install",
     "dev": "vite",
     "dev:frontend": "vite",
     "dev:backend": "npm --prefix backend run dev",
-    "dev:all": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\""
+    "dev:all": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "start": "npm --prefix backend start"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",

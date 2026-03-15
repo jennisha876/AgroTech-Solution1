@@ -1,6 +1,8 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import path from "path";
+import { fileURLToPath } from "url";
 import authRoutes from "./routes/auth.js";
 import userRoutes from "./routes/users.js";
 import productsRoutes from "./routes/products.js";
@@ -15,9 +17,25 @@ import trainingsRoutes from "./routes/trainings.js";
 
 const app = express();
 const port = Number(process.env.PORT || 4000);
-const origin = process.env.FRONTEND_ORIGIN || "http://localhost:5173";
+const originList = (process.env.FRONTEND_ORIGIN || "http://localhost:5173")
+  .split(",")
+  .map((value) => value.trim())
+  .filter(Boolean);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const frontendDist = path.resolve(__dirname, "../../dist");
 
-app.use(cors({ origin, credentials: true }));
+app.use(
+  cors({
+    credentials: true,
+    origin(requestOrigin, callback) {
+      if (!requestOrigin || originList.includes(requestOrigin)) {
+        return callback(null, true);
+      }
+      return callback(new Error("CORS not allowed"));
+    },
+  })
+);
 app.use(express.json({ limit: "1mb" }));
 
 app.get("/api/health", (_, res) => {
@@ -35,6 +53,19 @@ app.use("/api/ai", aiRoutes);
 app.use("/api/reviews", reviewsRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/trainings", trainingsRoutes);
+
+app.use(express.static(frontendDist));
+
+app.get(/^\/(?!api).*/, (_, res) => {
+  res.sendFile(path.join(frontendDist, "index.html"));
+});
+
+app.use((err, _, res, __) => {
+  if (err?.message === "CORS not allowed") {
+    return res.status(403).json({ message: "Origin not allowed" });
+  }
+  return res.status(500).json({ message: "Internal server error" });
+});
 
 app.use((_, res) => {
   res.status(404).json({ message: "Not found" });
