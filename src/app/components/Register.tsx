@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Leaf, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { JAMAICA_PARISHES, isJamaicaParish } from "../lib/parishes";
+import { SubscriptionModal, SubscriptionLevel } from "./SubscriptionModal";
 
 export function Register() {
   const [name, setName] = useState("");
@@ -23,6 +24,8 @@ export function Register() {
   const [location, setLocation] = useState("");
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showSubscription, setShowSubscription] = useState(false);
+  const [pendingFarmer, setPendingFarmer] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
 
@@ -73,7 +76,12 @@ export function Register() {
       });
       if (result.ok) {
         toast.success("Account created successfully!");
-        navigate("/dashboard");
+        if (userType === 'farmer') {
+          setShowSubscription(true);
+          setPendingFarmer(true);
+        } else {
+          navigate("/dashboard");
+        }
       } else {
         toast.error(result.message || "Could not create account. Check email/username and try again.");
       }
@@ -85,20 +93,34 @@ export function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-4">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="flex items-center justify-center gap-2 mb-8">
-          <img src="/images/logomain.svg" alt="AgroTechSolution" className="h-12 w-auto" />
-        </div>
+    <>
+      <SubscriptionModal
+        open={showSubscription}
+        onClose={() => {
+          setShowSubscription(false);
+          if (pendingFarmer) navigate("/dashboard");
+        }}
+        onSubscribe={(level: SubscriptionLevel) => {
+          setShowSubscription(false);
+          // Here you would call your backend to save the subscription level
+          toast.success(`Subscribed to ${level.charAt(0).toUpperCase() + level.slice(1)} plan!`);
+          if (pendingFarmer) navigate("/dashboard");
+        }}
+      />
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-4">
+        <div className="w-full max-w-md">
+          {/* Logo */}
+          <div className="flex items-center justify-center gap-2 mb-8">
+            <img src="/images/logomain.svg" alt="AgroTechSolution" className="h-12 w-auto" />
+          </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Create Account</CardTitle>
-            <CardDescription>Join SmithAgro as a farmer or buyer</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Create Account</CardTitle>
+              <CardDescription>Join SmithAgro as a farmer or buyer</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-3">
                 <Label>I am a</Label>
                 <RadioGroup value={userType} onValueChange={(value) => setUserType(value as 'farmer' | 'buyer')}>
