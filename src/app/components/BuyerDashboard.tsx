@@ -1,0 +1,562 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router";
+import { useAuth } from "../context/AuthContext";
+import { api, Product } from "../lib/api";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Badge } from "./ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { Leaf, LogOut, Search, ShoppingCart, Plus, Minus, Trash2, UserCircle, Eye, EyeOff } from "lucide-react";
+import { toast } from "sonner";
+import { ImageWithFallback } from "./figma/ImageWithFallback";
+import L from "leaflet";
+import { ThemeToggle } from "./ThemeToggle";
+
+interface CartItem {
+  product: Product;
+  quantity: number;
+}
+
+interface Order {
+  id: string;
+  total: number;
+  status: "pending" | "processing" | "shipped" | "delivered";
+  deliveryMethod: "delivery" | "pickup";
+  address: string;
+  orderDate: string;
+  items: CartItem[];
+}
+
+const parishCoordinates: Record<string, [number, number]> = {
+  "Kingston": [17.9712, -76.7936],
+  "St. Andrew": [18.0179, -76.7608],
+  "St. Thomas": [17.9915, -76.4428],
+  "Portland": [18.1777, -76.4611],
+  "St. Mary": [18.3212, -76.8997],
+  "St. Ann": [18.4064, -77.1047],
+  "Trelawny": [18.3526, -77.6078],
+  "St. James": [18.4166, -77.9260],
+  "Hanover": [18.4441, -78.1336],
+  "Westmoreland": [18.2944, -78.1564],
+  "St. Elizabeth": [18.0512, -77.6994],
+  "Manchester": [18.0420, -77.5078],
+  "Clarendon": [17.9541, -77.2456],
+  "St. Catherine": [17.9894, -77.0768],
+};
+
+const markerIcon = L.icon({
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+});
+
+function getBuyerCoords(location?: string): [number, number] {
+  if (!location) {
+    return parishCoordinates["Kingston"];
+  }
+
+  const match = Object.keys(parishCoordinates).find((parish) =>
+    location.toLowerCase().includes(parish.toLowerCase())
+  );
+
+  return match ? parishCoordinates[match] : parishCoordinates["Kingston"];
+}
+
+export function BuyerDashboard() {
+  const { user, logout, updateProfile, changePassword, switchRole } = useAuth();
+  const navigate = useNavigate();
+
+  const [activeSection, setActiveSection] = useState<"shop" | "cart" | "account">("shop");
+  const [products, setProducts] = useState<Product[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [cart, setCart] = useState<CartItem[]>([]);
+
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("all");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+
+  const [deliveryMethod, setDeliveryMethod] = useState<"delivery" | "pickup">("delivery");
+  const [deliveryAddress, setDeliveryAddress] = useState(user?.location || "");
+  const [paying, setPaying] = useState(false);
+
+  const [profile, setProfile] = useState({
+    name: user?.name || "",
+    username: user?.username || "",
+    email: user?.email || "",
+    location: user?.location || "",
+    phone: user?.phone || "",
+  });
+  const [passwords, setPasswords] = useState({ currentPassword: "", newPassword: "" });
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [reviewDrafts, setReviewDrafts] = useState<Record<string, { rating: number; comment: string }>>({});
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
+  const mapInstanceRef = useRef<ReturnType<typeof L.map> | null>(null);
+
+  const fetchProducts = async () => {
+    try {
+      const response = await api.listProducts({
+        search,
+        category,
+        minPrice: minPrice ? Number(minPrice) : null,
+        maxPrice: maxPrice ? Number(maxPrice) : null,
+      });
+      setProducts(response.products);
+    } catch (error) {
+      toast.error((error as Error).message || "Failed to load products");
+    }
+  };
+
+  const fetchOrders = async () => {
+    try {
+      const response = await api.listOrders();
+      setOrders(response.orders);
+    } catch (error) {
+      toast.error((error as Error).message || "Failed to load orders");
+    }
+  };
+
+  useEffect(() => {
+    fetchProducts();
+    fetchOrders();
+  }, []);
+
+  useEffect(() => {
+    setProfile({
+      name: user?.name || "",
+      username: user?.username || "",
+      email: user?.email || "",
+      location: user?.location || "",
+      phone: user?.phone || "",
+    });
+  }, [user]);
+
+  const cartCount = useMemo(() => cart.reduce((acc, item) => acc + item.quantity, 0), [cart]);
+  const cartTotal = useMemo(() => cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0), [cart]);
+  const buyerCoords = getBuyerCoords(deliveryAddress || profile.location || user?.location);
+
+  useEffect(() => {
+    if (activeSection !== "cart" || !mapContainerRef.current) {
+      return;
+    }
+
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.remove();
+      mapInstanceRef.current = null;
+    }
+
+    const map = L.map(mapContainerRef.current).setView(buyerCoords, 9);
+    mapInstanceRef.current = map;
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "&copy; OpenStreetMap contributors",
+    }).addTo(map);
+
+    L.marker(buyerCoords, { icon: markerIcon })
+      .addTo(map)
+      .bindPopup("Your delivery location");
+
+    cart.forEach((item) => {
+      const source: [number, number] = [item.product.lat, item.product.lng];
+      L.marker(source, { icon: markerIcon })
+        .addTo(map)
+        .bindPopup(`${item.product.name} from ${item.product.location}`);
+      L.polyline([source, buyerCoords], { color: "green" }).addTo(map);
+    });
+
+    return () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+    };
+  }, [activeSection, cart, buyerCoords]);
+
+  const addToCart = (product: Product) => {
+    setCart((prev) => {
+      const existing = prev.find((item) => item.product.id === product.id);
+      if (existing) {
+        return prev.map((item) =>
+          item.product.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      }
+      return [...prev, { product, quantity: 1 }];
+    });
+    toast.success("Added to cart");
+  };
+
+  const updateQty = (productId: string, delta: number) => {
+    setCart((prev) =>
+      prev
+        .map((item) =>
+          item.product.id === productId
+            ? { ...item, quantity: Math.max(0, item.quantity + delta) }
+            : item
+        )
+        .filter((item) => item.quantity > 0)
+    );
+  };
+
+  const removeFromCart = (productId: string) => {
+    setCart((prev) => prev.filter((item) => item.product.id !== productId));
+  };
+
+  const checkout = async () => {
+    if (!cart.length) {
+      toast.error("Cart is empty");
+      return;
+    }
+    if (deliveryMethod === "delivery" && !deliveryAddress.trim()) {
+      toast.error("Delivery address is required");
+      return;
+    }
+
+    setPaying(true);
+    try {
+      const payment = await api.createPaymentIntent(cartTotal);
+      const order = await api.createOrder({
+        items: cart,
+        deliveryMethod,
+        address: deliveryMethod === "delivery" ? deliveryAddress : "Pickup",
+        payment: {
+          status: payment.status,
+          paymentIntentId: payment.paymentIntentId,
+          provider: payment.provider,
+        },
+      });
+
+      setOrders((prev) => [order.order, ...prev]);
+      setCart([]);
+      setActiveSection("cart");
+      toast.success("Order placed and payment processed");
+    } catch (error) {
+      toast.error((error as Error).message || "Checkout failed");
+    } finally {
+      setPaying(false);
+    }
+  };
+
+  const saveProfile = async () => {
+    const result = await updateProfile(profile);
+    if (result.ok) {
+      toast.success("Profile updated");
+    } else {
+      toast.error(result.message || "Could not update profile");
+    }
+  };
+
+  const savePassword = async () => {
+    const result = await changePassword(passwords.currentPassword, passwords.newPassword);
+    if (result.ok) {
+      setPasswords({ currentPassword: "", newPassword: "" });
+      toast.success("Password updated");
+    } else {
+      toast.error(result.message || "Could not update password");
+    }
+  };
+
+  const handleSwitchRole = async () => {
+    const result = await switchRole("farmer");
+    if (result.ok) {
+      toast.success("Switched to farmer account");
+      navigate("/dashboard");
+    } else {
+      toast.error(result.message || "Could not switch role");
+    }
+  };
+
+  const submitReview = async (orderId: string, productId: string) => {
+    const key = `${orderId}-${productId}`;
+    const draft = reviewDrafts[key];
+    if (!draft || draft.comment.trim().length < 3) {
+      toast.error("Write a short review comment (min 3 chars)");
+      return;
+    }
+
+    try {
+      await api.createReview({
+        orderId,
+        productId,
+        rating: draft.rating || 5,
+        comment: draft.comment,
+      });
+      toast.success("Review submitted");
+      setReviewDrafts((prev) => ({ ...prev, [key]: { rating: 5, comment: "" } }));
+    } catch (error) {
+      toast.error((error as Error).message || "Could not submit review");
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+      <header className="bg-white border-b sticky top-0 z-20">
+        <div className="container mx-auto px-4 py-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-2">
+            <Leaf className="h-8 w-8 text-green-600" />
+            <span className="text-xl font-semibold">SmithAgro</span>
+            <Badge variant="outline">Buyer</Badge>
+          </div>
+
+          <div className="w-full md:max-w-md relative">
+            <Search className="h-4 w-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Input
+              className="pl-9"
+              placeholder="Search by product, farmer, or parish"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  fetchProducts();
+                }
+              }}
+            />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button variant={activeSection === "shop" ? "default" : "outline"} onClick={() => setActiveSection("shop")}>Shop</Button>
+            <Button variant={activeSection === "cart" ? "default" : "outline"} onClick={() => setActiveSection("cart")}>
+              <ShoppingCart className="h-4 w-4 mr-2" />
+              Cart ({cartCount})
+            </Button>
+            <Button variant={activeSection === "account" ? "default" : "outline"} onClick={() => setActiveSection("account")}>
+              <UserCircle className="h-4 w-4 mr-2" />
+              Account
+            </Button>
+            <Button variant="outline" onClick={() => { logout(); navigate("/"); }}>
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      <div className="container mx-auto px-4 py-8 space-y-4">
+        {activeSection === "shop" && (
+          <>
+            <Card>
+              <CardContent className="pt-6 space-y-3">
+                <div className="grid md:grid-cols-4 gap-3">
+                  <Select value={category} onValueChange={setCategory}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All categories</SelectItem>
+                      <SelectItem value="vegetables">Vegetables</SelectItem>
+                      <SelectItem value="grains">Grains</SelectItem>
+                      <SelectItem value="fruits">Fruits</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Input type="number" placeholder="Min price" value={minPrice} onChange={(e) => setMinPrice(e.target.value)} />
+                  <Input type="number" placeholder="Max price" value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} />
+                  <Button onClick={fetchProducts}>Apply Filters</Button>
+                </div>
+                <p className="text-sm text-slate-600">Parish search is enabled for all parishes. Example: St. Thomas, Portland, Clarendon, Kingston.</p>
+              </CardContent>
+            </Card>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {products.map((product) => (
+                <Card key={product.id} className="overflow-hidden">
+                  <div className="aspect-square bg-slate-100">
+                    <ImageWithFallback src={product.image} alt={product.name} className="h-full w-full object-cover" />
+                  </div>
+                  <CardHeader>
+                    <CardTitle className="text-base">{product.name}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-1">
+                    <p className="text-sm text-slate-600">{product.farmer} • {product.location}</p>
+                    <p className="text-sm text-slate-500">{product.description}</p>
+                    <p className="font-semibold text-green-700">${product.price} {product.unit}</p>
+                    <Button className="w-full mt-2" onClick={() => addToCart(product)}>
+                      <ShoppingCart className="h-4 w-4 mr-2" />
+                      Add to Cart
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </>
+        )}
+
+        {activeSection === "cart" && (
+          <div className="grid lg:grid-cols-3 gap-4">
+            <div className="lg:col-span-2 space-y-3">
+              <Card>
+                <CardHeader><CardTitle>Current Cart Details</CardTitle></CardHeader>
+                <CardContent className="space-y-3">
+                  {!cart.length && <p className="text-sm text-slate-600">Your cart is empty.</p>}
+                  {cart.map((item) => (
+                    <div key={item.product.id} className="border rounded-md p-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="font-medium">{item.product.name}</p>
+                          <p className="text-sm text-slate-600">From {item.product.farmer} in {item.product.location}</p>
+                          <p className="text-sm text-slate-600">Unit: ${item.product.price} {item.product.unit}</p>
+                          <p className="text-sm font-medium">Line total: ${(item.product.price * item.quantity).toFixed(2)}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button variant="outline" size="icon" onClick={() => updateQty(item.product.id, -1)}><Minus className="h-4 w-4" /></Button>
+                          <span>{item.quantity}</span>
+                          <Button variant="outline" size="icon" onClick={() => updateQty(item.product.id, 1)}><Plus className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="icon" onClick={() => removeFromCart(item.product.id)}><Trash2 className="h-4 w-4 text-red-600" /></Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader><CardTitle>Delivery Tracking Map</CardTitle></CardHeader>
+                <CardContent>
+                  <div ref={mapContainerRef} className="h-80 rounded-md overflow-hidden border" />
+                  <p className="text-xs text-slate-600 mt-2">Map shows where each product in your cart is sourced from.</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader><CardTitle>Recent Orders (After Purchase)</CardTitle></CardHeader>
+                <CardContent className="space-y-3">
+                  {!orders.length && <p className="text-sm text-slate-600">No orders yet.</p>}
+                  {orders.map((order) => (
+                    <div key={order.id} className="border rounded-md p-3">
+                      <div className="flex items-center justify-between">
+                        <p className="font-medium">Order {order.id}</p>
+                        <Badge variant="outline" className="capitalize">{order.status}</Badge>
+                      </div>
+                      <p className="text-sm text-slate-600">{new Date(order.orderDate).toLocaleString()}</p>
+                      <p className="text-sm">Delivery: {order.deliveryMethod} • {order.address}</p>
+                      <div className="text-sm mt-2 space-y-1">
+                        {order.items.map((item) => (
+                          <div key={`${order.id}-${item.product.id}`} className="border rounded p-2">
+                            <p>{item.quantity} x {item.product.name} ({item.product.location})</p>
+                            <div className="grid md:grid-cols-3 gap-2 mt-2">
+                              <Select
+                                value={String(reviewDrafts[`${order.id}-${item.product.id}`]?.rating || 5)}
+                                onValueChange={(value) => {
+                                  const key = `${order.id}-${item.product.id}`;
+                                  setReviewDrafts((prev) => ({
+                                    ...prev,
+                                    [key]: {
+                                      rating: Number(value),
+                                      comment: prev[key]?.comment || "",
+                                    },
+                                  }));
+                                }}
+                              >
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="1">1 Star</SelectItem>
+                                  <SelectItem value="2">2 Stars</SelectItem>
+                                  <SelectItem value="3">3 Stars</SelectItem>
+                                  <SelectItem value="4">4 Stars</SelectItem>
+                                  <SelectItem value="5">5 Stars</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <Input
+                                className="md:col-span-2"
+                                placeholder="Leave a review"
+                                value={reviewDrafts[`${order.id}-${item.product.id}`]?.comment || ""}
+                                onChange={(e) => {
+                                  const key = `${order.id}-${item.product.id}`;
+                                  setReviewDrafts((prev) => ({
+                                    ...prev,
+                                    [key]: {
+                                      rating: prev[key]?.rating || 5,
+                                      comment: e.target.value,
+                                    },
+                                  }));
+                                }}
+                              />
+                            </div>
+                            <Button className="mt-2" size="sm" onClick={() => submitReview(order.id, item.product.id)}>Submit Review</Button>
+                          </div>
+                        ))}
+                      </div>
+                      <p className="font-semibold mt-2">Total ${Number(order.total).toFixed(2)}</p>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card>
+              <CardHeader><CardTitle>Checkout</CardTitle></CardHeader>
+              <CardContent className="space-y-3">
+                <p>Total: <span className="font-semibold">${cartTotal.toFixed(2)}</span></p>
+                <Select value={deliveryMethod} onValueChange={(value: "delivery" | "pickup") => setDeliveryMethod(value)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="delivery">Delivery</SelectItem>
+                    <SelectItem value="pickup">Pickup</SelectItem>
+                  </SelectContent>
+                </Select>
+                {deliveryMethod === "delivery" && (
+                  <Input placeholder="Delivery address or parish" value={deliveryAddress} onChange={(e) => setDeliveryAddress(e.target.value)} />
+                )}
+                <Button onClick={checkout} disabled={paying || !cart.length} className="w-full bg-green-600 hover:bg-green-700">
+                  {paying ? "Processing..." : "Pay and Place Order"}
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {activeSection === "account" && (
+          <div className="space-y-4">
+            <Card>
+              <CardHeader><CardTitle>Profile</CardTitle></CardHeader>
+              <CardContent className="grid md:grid-cols-2 gap-3">
+                <div className="space-y-1"><Label>Name</Label><Input value={profile.name} onChange={(e) => setProfile((p) => ({ ...p, name: e.target.value }))} /></div>
+                <div className="space-y-1"><Label>Username</Label><Input value={profile.username} onChange={(e) => setProfile((p) => ({ ...p, username: e.target.value }))} /></div>
+                <div className="space-y-1"><Label>Email</Label><Input value={profile.email} onChange={(e) => setProfile((p) => ({ ...p, email: e.target.value }))} /></div>
+                <div className="space-y-1"><Label>Phone</Label><Input value={profile.phone} onChange={(e) => setProfile((p) => ({ ...p, phone: e.target.value }))} /></div>
+                <div className="space-y-1 md:col-span-2"><Label>Location</Label><Input value={profile.location} onChange={(e) => setProfile((p) => ({ ...p, location: e.target.value }))} /></div>
+                <div className="md:col-span-2"><Button onClick={saveProfile} className="bg-green-600 hover:bg-green-700">Save Profile</Button></div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader><CardTitle>Change Password</CardTitle></CardHeader>
+              <CardContent className="grid md:grid-cols-2 gap-3">
+                <div className="relative">
+                  <Input type={showCurrentPassword ? "text" : "password"} placeholder="Current password" value={passwords.currentPassword} onChange={(e) => setPasswords((p) => ({ ...p, currentPassword: e.target.value }))} />
+                  <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500" onClick={() => setShowCurrentPassword((prev) => !prev)}>
+                    {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                <div className="relative">
+                  <Input type={showNewPassword ? "text" : "password"} placeholder="New password" value={passwords.newPassword} onChange={(e) => setPasswords((p) => ({ ...p, newPassword: e.target.value }))} />
+                  <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500" onClick={() => setShowNewPassword((prev) => !prev)}>
+                    {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                <div className="md:col-span-2"><Button onClick={savePassword}>Update Password</Button></div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader><CardTitle>Appearance</CardTitle></CardHeader>
+              <CardContent>
+                <ThemeToggle />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader><CardTitle>Switch Account Type</CardTitle></CardHeader>
+              <CardContent>
+                <p className="text-sm text-slate-600 mb-3">Use the same profile to switch from buyer to farmer account.</p>
+                <Button onClick={handleSwitchRole} variant="outline">Switch to Farmer</Button>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
