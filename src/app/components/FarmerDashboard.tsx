@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Badge } from "./ui/badge";
-import { Leaf, LogOut, Plus, Trash2, Edit, CloudSun, Eye, EyeOff } from "lucide-react";
+import { Leaf, LogOut, Plus, Trash2, Edit, CloudSun, Eye, EyeOff, Bell, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 import { AiAssistant } from "./AiAssistant";
 import { ThemeToggle } from "./ThemeToggle";
@@ -26,6 +26,8 @@ const emptyForm = {
   status: "planted" as Crop["status"],
   notes: "",
 };
+
+export function FarmerDashboard() {
 
   const { user, logout, updateProfile, changePassword, switchRole } = useAuth();
   const [showSubscription, setShowSubscription] = useState(false);
@@ -47,7 +49,7 @@ const emptyForm = {
   const [weather, setWeather] = useState<{
     location: string;
     current: { temp: number; humidity: number; windSpeed: number; condition: string };
-    alerts: Array<{ id: string; type: "drought" | "frost" | "rain" | "storm"; severity: "low" | "medium" | "high"; message: string }>;
+    alerts: Array<{ id: string; type: "drought" | "frost" | "rain" | "storm" | "advisory"; severity: "low" | "medium" | "high"; message: string }>;
   } | null>(null);
 
   const [profile, setProfile] = useState({
@@ -374,10 +376,12 @@ const emptyForm = {
           </Card>
         )}
         <Tabs defaultValue="crops">
-          <TabsList>
+          <TabsList className="flex flex-wrap">
             <TabsTrigger value="crops">Crops</TabsTrigger>
             <TabsTrigger value="trainings">Training</TabsTrigger>
+            <TabsTrigger value="learning">Learning</TabsTrigger>
             <TabsTrigger value="weather">Weather</TabsTrigger>
+            <TabsTrigger value="alerts">Alerts</TabsTrigger>
             <TabsTrigger value="account">Account</TabsTrigger>
           </TabsList>
           <TabsContent value="trainings" className="space-y-4">
@@ -488,12 +492,50 @@ const emptyForm = {
             </div>
           </TabsContent>
 
+          <TabsContent value="learning" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2"><BookOpen className="h-5 w-5" />Farming Methods Learning Hub</CardTitle>
+              </CardHeader>
+              <CardContent className="grid md:grid-cols-3 gap-4">
+                <div className="border rounded-md p-4 space-y-2">
+                  <p className="font-semibold">Vertical Farming</p>
+                  <p className="text-sm text-muted-foreground">Best for limited land and controlled production cycles. Works well for leafy greens and herbs.</p>
+                  <p className="text-xs text-muted-foreground">Focus: stacked systems, nutrient dosing, humidity and airflow control.</p>
+                </div>
+                <div className="border rounded-md p-4 space-y-2">
+                  <p className="font-semibold">Traditional Farming</p>
+                  <p className="text-sm text-muted-foreground">Good for larger plots and lower setup cost. Depends more on weather and soil preparation.</p>
+                  <p className="text-xs text-muted-foreground">Focus: soil testing, crop rotation, irrigation, pest scouting schedule.</p>
+                </div>
+                <div className="border rounded-md p-4 space-y-2">
+                  <p className="font-semibold">Aquaponics</p>
+                  <p className="text-sm text-muted-foreground">Combines fish and crops in one recirculating system with high water efficiency.</p>
+                  <p className="text-xs text-muted-foreground">Focus: water quality, fish health, biofiltration, steady nutrient balance.</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader><CardTitle>Use TechGro for Guided Learning</CardTitle></CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">Open TechGro and ask: "Compare vertical farming, traditional farming, and aquaponics for my budget and land size" to get a tailored recommendation.</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="weather" className="space-y-4">
             <Card>
               <CardHeader><CardTitle>Weather and Alerts</CardTitle></CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex gap-2">
-                  <Input value={weatherLocation} onChange={(e) => setWeatherLocation(e.target.value)} placeholder="Enter city" />
+                  <Select value={weatherLocation} onValueChange={setWeatherLocation}>
+                    <SelectTrigger><SelectValue placeholder="Select a Jamaica parish" /></SelectTrigger>
+                    <SelectContent>
+                      {JAMAICA_PARISHES.map((parish) => (
+                        <SelectItem key={parish} value={parish}>{parish}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <Button onClick={loadWeather}><CloudSun className="h-4 w-4 mr-2" />Refresh</Button>
                 </div>
                 {weather && (
@@ -511,6 +553,34 @@ const emptyForm = {
                     </div>
                   </>
                 )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="alerts" className="space-y-4">
+            <Card>
+              <CardHeader><CardTitle className="flex items-center gap-2"><Bell className="h-5 w-5" />Farm Alerts</CardTitle></CardHeader>
+              <CardContent className="space-y-3">
+                {!weather && <p className="text-sm text-muted-foreground">Load weather first to view current alerts.</p>}
+                {weather?.alerts.map((alert) => (
+                  <div key={alert.id} className="border rounded-md p-3 bg-amber-100/30 dark:bg-amber-900/20">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-medium capitalize">{alert.type}</p>
+                      <Badge variant="outline" className="capitalize">{alert.severity}</Badge>
+                    </div>
+                    <p className="text-sm mt-1">{alert.message}</p>
+                  </div>
+                ))}
+                <p className="text-xs text-muted-foreground">
+                  If you see only low-level advisory alerts, it means current weather does not meet severe rain, storm, or drought thresholds.
+                </p>
+                <Button onClick={loadWeather} variant="outline">Refresh Alerts</Button>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader><CardTitle>Disease Monitoring With TechGro</CardTitle></CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">Use TechGro for symptom-based disease checks. Example prompt: "My pepper leaves have black spots and yellow edges. Diagnose and give treatment steps."</p>
               </CardContent>
             </Card>
           </TabsContent>

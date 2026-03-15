@@ -15,8 +15,14 @@ export function AiAssistant() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState<ChatItem[]>([
-    { role: "assistant", content: "I am TechGro. Ask me anything about crop quality, faulty produce detection, or weather risks and I will respond like your farming copilot." },
+    { role: "assistant", content: "I am TechGro. I can help with crop disease detection, treatment options, crop quality checks, and weather-risk decisions." },
   ]);
+
+  const quickPrompts = [
+    "My tomato leaves have yellow spots and curling. What disease could this be and what should I do first?",
+    "Compare vertical farming, traditional farming, and aquaponics for a small farmer in Jamaica.",
+    "Create a 7-day crop monitoring checklist for disease and pest detection.",
+  ];
 
   const sendMessage = async () => {
     if (!message.trim() || loading) {
@@ -60,6 +66,20 @@ export function AiAssistant() {
                 >
                   {item.content}
                 </div>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {quickPrompts.map((prompt) => (
+                <Button
+                  key={prompt}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-auto py-1 px-2 text-xs text-left"
+                  onClick={() => setMessage(prompt)}
+                >
+                  {prompt}
+                </Button>
               ))}
             </div>
             <div className="flex gap-2">

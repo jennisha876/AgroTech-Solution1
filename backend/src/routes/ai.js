@@ -29,7 +29,7 @@ async function callOpenAi(message, history = []) {
         {
           role: "system",
           content:
-            "You are TechGro, a farmer assistant with ChatGPT-style conversational continuity. Focus on faulty produce detection, crop quality checks, and weather risk guidance while staying practical and clear.",
+            "You are TechGro, a farmer assistant with ChatGPT-style conversational continuity. Focus on crop disease detection, practical treatment steps, faulty produce detection, crop quality checks, and weather risk guidance. Give concise, step-by-step, field-ready recommendations.",
         },
         ...history,
         { role: "user", content: message },
@@ -48,6 +48,12 @@ async function callOpenAi(message, history = []) {
 
 function fallbackReply(message) {
   const lower = message.toLowerCase();
+  if (lower.includes("disease") || lower.includes("leaf spot") || lower.includes("blight") || lower.includes("yellow") || lower.includes("pest") || lower.includes("fungus")) {
+    return "For possible disease detection: 1) identify symptoms (leaf spots, wilting, discoloration, stem rot), 2) isolate affected plants, 3) improve airflow and drainage, 4) remove infected tissue, 5) apply crop-appropriate treatment (bio-fungicide or registered fungicide), 6) track progress daily for 7 days. Share crop type and exact symptoms and I will suggest a specific treatment plan.";
+  }
+  if (lower.includes("vertical farming") || lower.includes("traditional farming") || lower.includes("aquaponics") || lower.includes("hydroponics")) {
+    return "Choose method by constraints: Vertical farming = high control and limited land, higher setup cost. Traditional farming = lower setup cost, larger land, weather exposure. Aquaponics = fish + plants in recirculating water, strong water efficiency, moderate technical skill required. Tell me your budget, land size, and crop goals and I will recommend the best option.";
+  }
   if (lower.includes("fault") || lower.includes("rotten") || lower.includes("spoil") || lower.includes("quality")) {
     return "Check color uniformity, smell, firmness, bruising, mold spots, and moisture damage. Separate suspect produce immediately and log affected batches.";
   }

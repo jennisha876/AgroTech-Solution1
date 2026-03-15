@@ -37,12 +37,30 @@ function buildAlerts(forecast) {
     });
   }
 
+  if (rain < 2 && maxTemp >= 32) {
+    alerts.push({
+      id: "dry_spell",
+      type: "drought",
+      severity: "medium",
+      message: "Very low rainfall expected with hot daytime temperatures. Start drought mitigation and mulching.",
+    });
+  }
+
   if (wind > 30) {
     alerts.push({
       id: "wind",
       type: "storm",
       severity: "medium",
       message: "Strong winds expected. Secure temporary structures.",
+    });
+  }
+
+  if (alerts.length === 0) {
+    alerts.push({
+      id: "advisory_stable",
+      type: "advisory",
+      severity: "low",
+      message: "No severe weather alerts right now. Conditions are stable, so continue routine crop monitoring.",
     });
   }
 
