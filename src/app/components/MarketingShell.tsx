@@ -7,7 +7,6 @@ const marketingLinks = [
   { to: "/", label: "Home" },
   { to: "/about", label: "About Us" },
   { to: "/contact", label: "Contact" },
-  { to: "/help-center", label: "Help Center" },
 ];
 
 function isActivePath(currentPath: string, targetPath: string) {
@@ -36,7 +35,7 @@ export function MarketingHeader() {
         </Link>
 
         <div className="flex flex-1 flex-wrap items-center justify-end gap-3 lg:gap-6">
-          <nav className="flex flex-wrap items-center gap-2 text-sm font-medium text-black/70 lg:gap-4">
+          <nav className="hidden md:flex flex-wrap items-center gap-2 text-sm font-medium text-black/70 lg:gap-4">
             {marketingLinks.map((link) => {
               const active = isActivePath(location.pathname, link.to);
 
@@ -52,7 +51,7 @@ export function MarketingHeader() {
             })}
           </nav>
 
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             {isAuthenticated ? (
               <Link to="/dashboard">
                 <Button className="bg-green-600 hover:bg-green-700">Go to Dashboard</Button>
@@ -91,7 +90,6 @@ export function MarketingFooter() {
             <ul className="space-y-2 text-sm">
               <li><Link to="/about" className="hover:text-white">About Us</Link></li>
               <li><Link to="/contact" className="hover:text-white">Contact</Link></li>
-              <li><Link to="/help-center" className="hover:text-white">Help Center</Link></li>
             </ul>
           </div>
 
