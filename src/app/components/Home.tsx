@@ -14,7 +14,9 @@ export function Home() {
       <header className="border-b bg-white sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src="/images/logomain.svg" alt="AgroTechSolution" className="h-9 w-auto" />
+            <Link to="/" aria-label="Go to homepage">
+              <img src="/images/logomain.svg" alt="AgroTechSolution" className="h-9 w-auto" />
+            </Link>
           </div>
           <nav className="flex items-center gap-4">
             {isAuthenticated ? (
