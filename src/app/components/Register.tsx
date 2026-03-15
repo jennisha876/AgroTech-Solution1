@@ -266,5 +266,6 @@ export function Register() {
         </Card>
       </div>
     </div>
+  </>
   );
 
