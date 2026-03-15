@@ -20,7 +20,7 @@ import { JAMAICA_PARISHES } from "../lib/parishes";
 interface Order {
   id: string;
   total: number;
-  status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
+  status: "pending" | "approved" | "processing" | "shipped" | "delivered" | "cancelled";
   deliveryMethod: "delivery" | "pickup";
   address: string;
   deliveryTime?: string;
@@ -65,7 +65,27 @@ export function FarmerDashboard() {
   // Orders state
   const [orders, setOrders] = useState<Order[]>([]);
 
-  // Training session state
+  // Inventory state
+  const [inventory, setInventory] = useState<Array<{
+    id: string;
+    name: string;
+    category: string;
+    quantity: number;
+    unit: string;
+    price: number;
+    description: string;
+    inStock: boolean;
+  }>>([]);
+  const [inventoryForm, setInventoryForm] = useState({
+    name: "",
+    category: "",
+    quantity: 0,
+    unit: "lb",
+    price: 0,
+    description: "",
+    inStock: true,
+  });
+  const [editingInventoryId, setEditingInventoryId] = useState<string | null>(null);
   const [trainings, setTrainings] = useState<Training[]>([]);
   const [booking, setBooking] = useState(false);
   const [trainingType, setTrainingType] = useState<"online" | "on-site">("online");
@@ -128,12 +148,12 @@ export function FarmerDashboard() {
         setWeather(weatherResponse);
         setTrainings(trainingResponse.trainings);
 
-        // Mock orders for testing
+        // Mock orders for testing - admin approved orders
         setOrders([
           {
             id: "order-1",
             total: 45.50,
-            status: "pending",
+            status: "approved", // Admin approved, farmer can accept/reject
             deliveryMethod: "delivery",
             address: "Kingston, Jamaica",
             deliveryTime: "2026-03-16T14:00",
@@ -162,6 +182,40 @@ export function FarmerDashboard() {
               }
             ]
           }
+        ]);
+
+        // Mock inventory for testing
+        setInventory([
+          {
+            id: "inv-1",
+            name: "Fresh Tomatoes",
+            category: "Vegetables",
+            quantity: 50,
+            unit: "lb",
+            price: 5.00,
+            description: "Locally grown organic tomatoes",
+            inStock: true,
+          },
+          {
+            id: "inv-2",
+            name: "Organic Lettuce",
+            category: "Vegetables",
+            quantity: 25,
+            unit: "lb",
+            price: 3.50,
+            description: "Fresh organic lettuce from local farms",
+            inStock: true,
+          },
+          {
+            id: "inv-3",
+            name: "Sweet Potatoes",
+            category: "Root Vegetables",
+            quantity: 0,
+            unit: "lb",
+            price: 4.00,
+            description: "Sweet potatoes from Jamaican soil",
+            inStock: false,
+          },
         ]);
       } catch (error) {
         toast.error((error as Error).message || "Failed loading dashboard data");
@@ -353,6 +407,45 @@ export function FarmerDashboard() {
     }
   };
 
+  // Inventory management functions
+  const handleAddInventory = () => {
+    if (!inventoryForm.name.trim()) {
+      toast.error("Product name is required");
+      return;
+    }
+    const newItem = {
+      id: editingInventoryId || `inv-${Date.now()}`,
+      ...inventoryForm,
+    };
+    if (editingInventoryId) {
+      setInventory(prev => prev.map(item => item.id === editingInventoryId ? newItem : item));
+      toast.success("Inventory item updated");
+    } else {
+      setInventory(prev => [...prev, newItem]);
+      toast.success("Inventory item added");
+    }
+    setInventoryForm({
+      name: "",
+      category: "",
+      quantity: 0,
+      unit: "lb",
+      price: 0,
+      description: "",
+      inStock: true,
+    });
+    setEditingInventoryId(null);
+  };
+
+  const handleEditInventory = (item: any) => {
+    setInventoryForm(item);
+    setEditingInventoryId(item.id);
+  };
+
+  const handleDeleteInventory = (id: string) => {
+    setInventory(prev => prev.filter(item => item.id !== id));
+    toast.success("Inventory item deleted");
+  };
+
   const saveProfile = async () => {
     if (profile.username.trim().length < 3) {
       toast.error("Username must be at least 3 characters");
@@ -406,6 +499,7 @@ export function FarmerDashboard() {
           </div>
           <nav className="hidden md:flex items-center gap-4">
             <Button variant={activeTab === "crops" ? "default" : "ghost"} onClick={() => setActiveTab("crops")}>Crops</Button>
+            <Button variant={activeTab === "inventory" ? "default" : "ghost"} onClick={() => setActiveTab("inventory")}>Inventory</Button>
             <Button variant={activeTab === "orders" ? "default" : "ghost"} onClick={() => setActiveTab("orders")}>Orders</Button>
             <Button variant={activeTab === "trainings" ? "default" : "ghost"} onClick={() => setActiveTab("trainings")}>Training</Button>
             <Button variant={activeTab === "learning" ? "default" : "ghost"} onClick={() => setActiveTab("learning")}>Learning</Button>
@@ -499,7 +593,7 @@ export function FarmerDashboard() {
               <CardHeader><CardTitle>Incoming Orders</CardTitle></CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {orders.filter(o => o.status === "pending").map((order) => (
+                  {orders.filter(o => o.status === "approved").map((order) => (
                     <div key={order.id} className="border rounded-md p-3">
                       <div className="flex items-center justify-between">
                         <p className="font-medium">Order {order.id} from {order.buyerName}</p>
@@ -588,6 +682,92 @@ export function FarmerDashboard() {
                           <td>{t.date}</td>
                           <td className="capitalize">{t.type}</td>
                           <td>{t.status}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="inventory" className="space-y-4">
+            <Card>
+              <CardHeader><CardTitle>{editingInventoryId ? "Edit Product" : "Add Product"}</CardTitle></CardHeader>
+              <CardContent className="grid md:grid-cols-2 gap-3">
+                <Input placeholder="Product name" value={inventoryForm.name} onChange={(e) => setInventoryForm((p) => ({ ...p, name: e.target.value }))} />
+                <Input placeholder="Category" value={inventoryForm.category} onChange={(e) => setInventoryForm((p) => ({ ...p, category: e.target.value }))} />
+                <Input type="number" placeholder="Quantity" value={inventoryForm.quantity} onChange={(e) => setInventoryForm((p) => ({ ...p, quantity: Number(e.target.value || 0) }))} />
+                <Select value={inventoryForm.unit} onValueChange={(value) => setInventoryForm((p) => ({ ...p, unit: value }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="lb">Pounds (lb)</SelectItem>
+                    <SelectItem value="kg">Kilograms (kg)</SelectItem>
+                    <SelectItem value="units">Units</SelectItem>
+                    <SelectItem value="crates">Crates</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input type="number" step="0.01" placeholder="Price per unit" value={inventoryForm.price} onChange={(e) => setInventoryForm((p) => ({ ...p, price: Number(e.target.value || 0) }))} />
+                <div className="flex items-center space-x-2">
+                  <input type="checkbox" id="inStock" checked={inventoryForm.inStock} onChange={(e) => setInventoryForm((p) => ({ ...p, inStock: e.target.checked }))} />
+                  <Label htmlFor="inStock">In Stock</Label>
+                </div>
+                <div className="md:col-span-2">
+                  <Textarea placeholder="Description" value={inventoryForm.description} onChange={(e) => setInventoryForm((p) => ({ ...p, description: e.target.value }))} />
+                </div>
+                <div className="md:col-span-2 flex gap-2">
+                  <Button onClick={handleAddInventory} className="bg-green-600 hover:bg-green-700">
+                    {editingInventoryId ? "Update Product" : "Add Product"}
+                  </Button>
+                  {editingInventoryId && (
+                    <Button variant="outline" onClick={() => { setEditingInventoryId(null); setInventoryForm({ name: "", category: "", quantity: 0, unit: "lb", price: 0, description: "", inStock: true }); }}>
+                      Cancel
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader><CardTitle>Inventory Management</CardTitle></CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-sm">
+                    <thead>
+                      <tr>
+                        <th className="text-left">Product</th>
+                        <th className="text-left">Category</th>
+                        <th className="text-left">Quantity</th>
+                        <th className="text-left">Price</th>
+                        <th className="text-left">Status</th>
+                        <th className="text-left">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {inventory.length === 0 && (
+                        <tr><td colSpan={6} className="text-center text-muted-foreground py-4">No products in inventory yet.</td></tr>
+                      )}
+                      {inventory.map((item) => (
+                        <tr key={item.id}>
+                          <td className="font-medium">{item.name}</td>
+                          <td>{item.category}</td>
+                          <td>{item.quantity} {item.unit}</td>
+                          <td>${item.price.toFixed(2)}</td>
+                          <td>
+                            <Badge variant={item.inStock ? "default" : "secondary"}>
+                              {item.inStock ? "In Stock" : "Out of Stock"}
+                            </Badge>
+                          </td>
+                          <td>
+                            <div className="flex gap-2">
+                              <Button size="sm" variant="outline" onClick={() => handleEditInventory(item)}>
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button size="sm" variant="destructive" onClick={() => handleDeleteInventory(item.id)}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </td>
                         </tr>
                       ))}
                     </tbody>

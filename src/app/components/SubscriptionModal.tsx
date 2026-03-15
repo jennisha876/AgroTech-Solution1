@@ -76,10 +76,10 @@ export function SubscriptionModal({ open, onClose, onSubscribe }: {
             Select a subscription to unlock more features. All plans include a 30-day free trial.
           </DialogDescription>
         </DialogHeader>
-        <div className="flex gap-4 mb-2">
-          <span className="font-semibold">Currency:</span>
-          <Button variant={currency === "usd" ? "default" : "outline"} onClick={() => setCurrency("usd")}>USD</Button>
-          <Button variant={currency === "jmd" ? "default" : "outline"} onClick={() => setCurrency("jmd")}>JMD</Button>
+        <div className="flex gap-2 mb-4">
+          <span className="font-semibold text-sm">Currency:</span>
+          <Button size="sm" variant={currency === "usd" ? "default" : "outline"} onClick={() => setCurrency("usd")}>USD</Button>
+          <Button size="sm" variant={currency === "jmd" ? "default" : "outline"} onClick={() => setCurrency("jmd")}>JMD</Button>
         </div>
         <div className="grid gap-4 mt-2">
           {Object.entries(SUBSCRIPTION_DETAILS).map(([key, plan]) => (
@@ -93,7 +93,9 @@ export function SubscriptionModal({ open, onClose, onSubscribe }: {
                   <div className="font-bold text-lg">{plan.name}</div>
                   <div className="text-sm text-muted-foreground">{plan.description}</div>
                 </div>
-                <div className="font-bold text-green-700 text-xl">{plan.priceText}</div>
+                <div className="font-bold text-green-700 text-xl">
+                  {currency === "usd" ? `$${plan.priceUSD}${key === "basic" ? "/mo" : "/yr"}` : `J$${plan.priceJMD}${key === "basic" ? "/mo" : "/yr"}`}
+                </div>
               </div>
               <ul className="mt-2 ml-4 list-disc text-sm">
                 {plan.details.map((d, i) => <li key={i}>{d}</li>)}

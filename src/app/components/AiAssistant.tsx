@@ -20,14 +20,11 @@ export function AiAssistant() {
     {
       role: "assistant",
       content:
-        "I am TechGro. I can help with any farming-related question—from crop health and pest control to market access and logistics. Upload a crop image if you want me to scan it and suggest likely issues.",
+        "I am TechGro, your Jamaican agriculture assistant. I can help with any farming questions specific to Jamaica—from crop cultivation and pest management to market access and local agricultural practices. Upload a crop image if you want me to analyze it for diseases or issues.",
     },
   ]);
 
-  const quickPrompts = [
-    "My tomato leaves have yellow spots and curling. What disease could this be and what should I do first?",
-    "Create a 7-day crop monitoring checklist for disease and pest detection.",
-  ];
+  const quickPrompts = [];
 
   const sendMessage = async () => {
     if ((!message.trim() && !imageDataUrl) || loading) {
@@ -103,20 +100,6 @@ export function AiAssistant() {
                 </div>
               ))}
             </div>
-            <div className="flex flex-wrap gap-2">
-              {quickPrompts.map((prompt) => (
-                <Button
-                  key={prompt}
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-auto py-1 px-2 text-xs text-left max-w-[180px] truncate"
-                  onClick={() => setMessage(prompt)}
-                >
-                  {prompt}
-                </Button>
-              ))}
-            </div>
             <div className="flex gap-2">
               <div className="flex items-center">
                 <label className="cursor-pointer inline-flex items-center justify-center h-10 w-10 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground">
@@ -136,7 +119,7 @@ export function AiAssistant() {
               <Input
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder="Ask TechGro anything..."
+                placeholder="Ask about Jamaican farming, crops, or agriculture..."
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     sendMessage();

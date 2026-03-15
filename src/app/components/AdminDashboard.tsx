@@ -81,7 +81,7 @@ export function AdminDashboard() {
           {
             id: "order-1",
             total: 45.50,
-            status: "pending",
+            status: "pending", // Initially pending, admin can approve
             deliveryMethod: "delivery",
             address: "Kingston, Jamaica",
             deliveryTime: "2026-03-16T14:00",
