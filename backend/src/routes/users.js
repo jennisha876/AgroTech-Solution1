@@ -1,47 +1,3 @@
-// --- Subscription update endpoint ---
-const subscriptionSchema = z.object({
-  subscriptionLevel: z.enum(["basic", "diamond", "platinum"]),
-});
-
-    const frontendOrigin = (process.env.FRONTEND_ORIGIN || "")
-      .split(",")
-      .map((value) => value.trim())
-      .filter(Boolean)[0] || "http://localhost:5173";
-  const parseResult = subscriptionSchema.safeParse(req.body);
-  if (!parseResult.success) {
-    return res.status(400).json({ message: "Invalid subscription data" });
-  }
-  const users = await readJson("users.json", []);
-  const index = users.findIndex((u) => u.id === req.user.id);
-  if (index === -1) {
-    return res.status(404).json({ message: "User not found" });
-  }
-  const user = users[index];
-  if (user.userType !== "farmer") {
-    return res.status(403).json({ message: "Only farmers can update subscription" });
-  }
-  const { subscriptionLevel } = parseResult.data;
-  let trialEndsAt = user.trialEndsAt;
-  // If switching plan, reset trial if not already expired
-  const now = new Date();
-  if (!trialEndsAt || new Date(trialEndsAt) < now) {
-    const trial = new Date();
-    trial.setDate(trial.getDate() + 30);
-    trialEndsAt = trial.toISOString();
-  }
-  users[index] = {
-    ...user,
-    subscriptionLevel,
-    subscriptionStatus: "trial",
-    trialEndsAt,
-    updatedAt: nowIso(),
-  };
-  await writeJson("users.json", users);
-  return res.json({
-    message: "Subscription updated",
-    user: { ...users[index], passwordHash: undefined },
-  });
-});
 import { Router } from "express";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
@@ -93,6 +49,10 @@ const resetPasswordSchema = z.object({
 
 const switchRoleSchema = z.object({
   targetRole: z.enum(["farmer", "buyer"]),
+});
+
+const subscriptionSchema = z.object({
+  subscriptionLevel: z.enum(["basic", "diamond", "platinum"]),
 });
 
 router.get("/me", requireAuth, async (req, res) => {
@@ -154,6 +114,49 @@ router.put("/profile", requireAuth, async (req, res) => {
   return res.json({ token, user: { ...updatedUser, passwordHash: undefined } });
 });
 
+router.put("/subscription", requireAuth, async (req, res) => {
+  const parseResult = subscriptionSchema.safeParse(req.body);
+  if (!parseResult.success) {
+    return res.status(400).json({ message: "Invalid subscription data" });
+  }
+
+  const users = await readJson("users.json", []);
+  const index = users.findIndex((u) => u.id === req.user.id);
+  if (index === -1) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  const user = users[index];
+  if (user.userType !== "farmer") {
+    return res.status(403).json({ message: "Only farmers can update subscription" });
+  }
+
+  const { subscriptionLevel } = parseResult.data;
+  let trialEndsAt = user.trialEndsAt;
+
+  const now = new Date();
+  if (!trialEndsAt || new Date(trialEndsAt) < now) {
+    const trial = new Date();
+    trial.setDate(trial.getDate() + 30);
+    trialEndsAt = trial.toISOString();
+  }
+
+  users[index] = {
+    ...user,
+    subscriptionLevel,
+    subscriptionStatus: "trial",
+    trialEndsAt,
+    updatedAt: nowIso(),
+  };
+
+  await writeJson("users.json", users);
+
+  return res.json({
+    message: "Subscription updated",
+    user: { ...users[index], passwordHash: undefined },
+  });
+});
+
 router.put("/password", requireAuth, async (req, res) => {
   const parseResult = passwordSchema.safeParse(req.body);
   if (!parseResult.success) {
@@ -194,13 +197,19 @@ router.post("/password-reset-request", async (req, res) => {
   const user = users.find(
     (u) => u.email.toLowerCase() === identifier || u.username.toLowerCase() === identifier
   );
+
   let resetToken;
   let resetLink;
   if (user) {
     const token = makeId("reset_token");
-    const frontendOrigin = process.env.FRONTEND_ORIGIN || "http://localhost:5173";
+    const frontendOrigin = (process.env.FRONTEND_ORIGIN || "")
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean)[0] || "http://localhost:5173";
+
     resetToken = token;
     resetLink = `${frontendOrigin}/reset-password?token=${encodeURIComponent(token)}`;
+
     resets.push({
       id: makeId("reset"),
       userId: user.id,
@@ -211,6 +220,7 @@ router.post("/password-reset-request", async (req, res) => {
       status: "pending",
       requestedAt: nowIso(),
     });
+
     await writeJson("passwordResets.json", resets);
   }
 
@@ -300,6 +310,7 @@ router.post("/switch-role", requireAuth, async (req, res) => {
       createdAt: nowIso(),
       updatedAt: nowIso(),
     };
+
     users.push(targetAccount);
     await writeJson("users.json", users);
   }
