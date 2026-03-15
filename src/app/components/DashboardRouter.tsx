@@ -11,10 +11,19 @@ export function DashboardRouter() {
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/login");
+      return;
     }
-  }, [isAuthenticated, navigate]);
+
+    if (user?.userType === "admin") {
+      navigate("/admin");
+    }
+  }, [isAuthenticated, user, navigate]);
 
   if (!isAuthenticated || !user) {
+    return null;
+  }
+
+  if (user.userType === "admin") {
     return null;
   }
 

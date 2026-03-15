@@ -6,6 +6,7 @@ import { Login } from "./components/Login";
 import { Register } from "./components/Register";
 import { NotFound } from "./components/NotFound";
 import { ResetPassword } from "./components/ResetPassword";
+import { AdminDashboard } from "./components/AdminDashboard";
 
 export const router = createBrowserRouter([
   {
@@ -17,6 +18,7 @@ export const router = createBrowserRouter([
       { path: "register", Component: Register },
       { path: "reset-password", Component: ResetPassword },
       { path: "dashboard", Component: DashboardRouter },
+      { path: "admin", Component: AdminDashboard },
       { path: "*", Component: NotFound },
     ],
   },

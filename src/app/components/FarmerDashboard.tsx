@@ -357,4 +357,14 @@ export function FarmerDashboard() {
               <CardHeader><CardTitle>Switch Account Type</CardTitle></CardHeader>
               <CardContent>
                 <p className="text-sm text-slate-600 mb-3">Use the same profile to switch from farmer to buyer account.</p>
-                <Button onClick={handleSwitchRole} variant="outline">
+                <Button onClick={handleSwitchRole} variant="outline">Switch to Buyer</Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      <AiAssistant />
+    </div>
+  );
+}

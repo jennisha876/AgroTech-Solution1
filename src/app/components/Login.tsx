@@ -6,13 +6,13 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { Leaf, User, ShoppingBag, Eye, EyeOff } from "lucide-react";
+import { User, ShoppingBag, Eye, EyeOff, Shield } from "lucide-react";
 import { toast } from "sonner";
 
 export function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [userType, setUserType] = useState<"farmer" | "buyer">("farmer");
+  const [userType, setUserType] = useState<"farmer" | "buyer" | "admin">("farmer");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { login, requestPasswordReset } = useAuth();
@@ -61,8 +61,7 @@ export function Login() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex items-center justify-center gap-2 mb-8">
-          <Leaf className="h-10 w-10 text-green-600" />
-          <span className="text-2xl font-bold">SmithAgro</span>
+          <img src="/images/logomain.svg" alt="AgroTechSolution" className="h-12 w-auto" />
         </div>
 
         <Card>
@@ -71,8 +70,8 @@ export function Login() {
             <CardDescription>Sign in to your SmithAgro account</CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs value={userType} onValueChange={(value) => setUserType(value as "farmer" | "buyer")} className="mb-4">
-              <TabsList className="grid w-full grid-cols-2">
+            <Tabs value={userType} onValueChange={(value) => setUserType(value as "farmer" | "buyer" | "admin")} className="mb-4">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="farmer" className="gap-2">
                   <User className="h-4 w-4" />
                   Farmer
@@ -80,6 +79,10 @@ export function Login() {
                 <TabsTrigger value="buyer" className="gap-2">
                   <ShoppingBag className="h-4 w-4" />
                   Buyer
+                </TabsTrigger>
+                <TabsTrigger value="admin" className="gap-2">
+                  <Shield className="h-4 w-4" />
+                  Admin
                 </TabsTrigger>
               </TabsList>
               <TabsContent value="farmer">
@@ -93,6 +96,13 @@ export function Login() {
                 <div className="text-center py-4">
                   <p className="text-sm text-gray-600">
                     Login as a buyer to shop fresh produce from local farms
+                  </p>
+                </div>
+              </TabsContent>
+              <TabsContent value="admin">
+                <div className="text-center py-4">
+                  <p className="text-sm text-gray-600">
+                    Login as admin to access AgroTechSolution system controls
                   </p>
                 </div>
               </TabsContent>

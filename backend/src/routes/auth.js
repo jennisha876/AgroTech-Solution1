@@ -26,7 +26,7 @@ const registerSchema = z.object({
   username: usernameSchema,
   email: z.string().email("Please provide a valid email address"),
   password: passwordSchema,
-  userType: z.enum(["farmer", "buyer"]),
+  userType: z.enum(["farmer", "buyer", "admin"]),
   location: z.string().optional().default(""),
   phone: z.string().optional().default(""),
 });
@@ -34,7 +34,7 @@ const registerSchema = z.object({
 const loginSchema = z.object({
   email: z.string().email("Please provide a valid email address"),
   password: z.string().min(1, "Password is required"),
-  userType: z.enum(["farmer", "buyer"]),
+  userType: z.enum(["farmer", "buyer", "admin"]),
 });
 
 router.post("/register", async (req, res) => {

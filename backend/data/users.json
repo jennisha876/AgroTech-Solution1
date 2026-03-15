@@ -1,14 +1,38 @@
 [
   {
-    "id": "usr_1773532387437_5349",
-    "name": "Jennisha Smith",
-    "username": "jennishasmith",
-    "email": "jennisha@gmail.com",
-    "passwordHash": "$2a$12$C70sqnP7TwyK.6EYh8AGO.9oYPJ9ln3yojVRz90mJpQMgY/.XzIAe",
+    "id": "usr_test_buyer_001",
+    "name": "Test Buyer",
+    "username": "testbuyer",
+    "email": "buyer@test.local",
+    "passwordHash": "$2a$12$lG2TMWXb7IzBTtDYp2hZy.foNUyJmssDiYcQW0CIpdE9T7qUhHZCC",
     "userType": "buyer",
-    "location": "",
-    "phone": "",
-    "createdAt": "2026-03-14T23:53:07.438Z",
-    "updatedAt": "2026-03-14T23:53:07.438Z"
+    "location": "Kingston",
+    "phone": "+1-876-555-1001",
+    "createdAt": "2026-03-14T00:00:00.000Z",
+    "updatedAt": "2026-03-14T00:00:00.000Z"
+  },
+  {
+    "id": "usr_test_farmer_001",
+    "name": "Test Farmer",
+    "username": "testfarmer",
+    "email": "farmer@test.local",
+    "passwordHash": "$2a$12$x0ZxdWFDPeF/qB4iLuFxUupUcIzitZqD2kTp/TElyRzzr.ohQlhke",
+    "userType": "farmer",
+    "location": "St. Elizabeth",
+    "phone": "+1-876-555-1002",
+    "createdAt": "2026-03-14T00:00:00.000Z",
+    "updatedAt": "2026-03-14T00:00:00.000Z"
+  },
+  {
+    "id": "usr_test_admin_001",
+    "name": "Test Admin",
+    "username": "testadmin",
+    "email": "admin@test.local",
+    "passwordHash": "$2a$12$AmDdXseGXos9zyQtEmzTPuGDzWbRLkvGYqKvmoq0y4HoVxYc.j9Ve",
+    "userType": "admin",
+    "location": "Kingston",
+    "phone": "+1-876-555-1003",
+    "createdAt": "2026-03-14T00:00:00.000Z",
+    "updatedAt": "2026-03-14T00:00:00.000Z"
   }
 ]

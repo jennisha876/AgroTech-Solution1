@@ -82,8 +82,7 @@ export function Register() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex items-center justify-center gap-2 mb-8">
-          <Leaf className="h-10 w-10 text-green-600" />
-          <span className="text-2xl font-bold">SmithAgro</span>
+          <img src="/images/logomain.svg" alt="AgroTechSolution" className="h-12 w-auto" />
         </div>
 
         <Card>

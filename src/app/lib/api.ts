@@ -1,4 +1,4 @@
-export type UserType = "farmer" | "buyer";
+export type UserType = "farmer" | "buyer" | "admin";
 
 export interface User {
   id: string;
@@ -224,5 +224,17 @@ export const api = {
 
   async listMyReviews() {
     return request<{ reviews: any[] }>("/reviews/mine");
+  },
+
+  async adminOverview() {
+    return request<{
+      users: number;
+      buyers: number;
+      farmers: number;
+      admins: number;
+      orders: number;
+      reviews: number;
+      pendingResets: number;
+    }>("/admin/overview");
   },
 };
