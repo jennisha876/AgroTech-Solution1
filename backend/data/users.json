@@ -49,5 +49,17 @@
     "subscriptionLevel": "basic",
     "subscriptionStatus": "trial",
     "trialEndsAt": "2026-04-14T12:15:58.424Z"
+  },
+  {
+    "id": "usr_1773587212759_8212",
+    "name": "Test Buyer",
+    "username": "testbuyer_farmer",
+    "email": "buyer@test.local",
+    "passwordHash": "$2a$12$lG2TMWXb7IzBTtDYp2hZy.foNUyJmssDiYcQW0CIpdE9T7qUhHZCC",
+    "userType": "farmer",
+    "location": "Kingston",
+    "phone": "+1-876-555-1001",
+    "createdAt": "2026-03-15T15:06:52.759Z",
+    "updatedAt": "2026-03-15T15:06:52.759Z"
   }
 ]

@@ -69,7 +69,7 @@ export function SubscriptionModal({ open, onClose, onSubscribe }: {
   const [currency, setCurrency] = useState<"usd" | "jmd">("usd");
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent>
+      <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Choose Your Membership</DialogTitle>
           <DialogDescription>

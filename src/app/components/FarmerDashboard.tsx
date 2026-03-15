@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { useAuth } from "../context/AuthContext";
-import { SubscriptionModal, SubscriptionLevel, SUBSCRIPTION_DETAILS } from "./SubscriptionModal";
 import { api, Crop, Training } from "../lib/api";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -16,6 +15,28 @@ import { toast } from "sonner";
 import { AiAssistant } from "./AiAssistant";
 import { ThemeToggle } from "./ThemeToggle";
 import { JAMAICA_PARISHES } from "../lib/parishes";
+
+interface Order {
+  id: string;
+  total: number;
+  status: "pending" | "processing" | "shipped" | "delivered";
+  deliveryMethod: "delivery" | "pickup";
+  address: string;
+  deliveryTime?: string;
+  paymentMethod?: string;
+  orderDate: string;
+  buyerName: string;
+  buyerEmail: string;
+  items: Array<{
+    product: {
+      id: string;
+      name: string;
+      price: number;
+      unit: string;
+    };
+    quantity: number;
+  }>;
+}
 
 const emptyForm = {
   name: "",
@@ -39,6 +60,9 @@ export function FarmerDashboard() {
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  // Orders state
+  const [orders, setOrders] = useState<Order[]>([]);
 
   // Training session state
   const [trainings, setTrainings] = useState<Training[]>([]);
@@ -94,14 +118,16 @@ export function FarmerDashboard() {
   useEffect(() => {
     const load = async () => {
       try {
-        const [cropResponse, weatherResponse, trainingResponse] = await Promise.all([
+        const [cropResponse, weatherResponse, trainingResponse, orderResponse] = await Promise.all([
           api.listCrops(),
           api.getWeather(weatherLocation),
           api.listTrainings(),
+          api.listFarmerOrders(),
         ]);
         setCrops(cropResponse.crops);
         setWeather(weatherResponse);
         setTrainings(trainingResponse.trainings);
+        setOrders(orderResponse.orders);
       } catch (error) {
         toast.error((error as Error).message || "Failed loading dashboard data");
       }
@@ -272,6 +298,26 @@ export function FarmerDashboard() {
     }
   };
 
+  const handleAcceptOrder = async (orderId: string) => {
+    try {
+      await api.updateOrderStatus(orderId, "processing");
+      setOrders((prev) => prev.map(o => o.id === orderId ? { ...o, status: "processing" } : o));
+      toast.success("Order accepted");
+    } catch (error) {
+      toast.error((error as Error).message || "Could not accept order");
+    }
+  };
+
+  const handleRejectOrder = async (orderId: string) => {
+    try {
+      await api.updateOrderStatus(orderId, "cancelled");
+      setOrders((prev) => prev.map(o => o.id === orderId ? { ...o, status: "cancelled" } : o));
+      toast.success("Order rejected");
+    } catch (error) {
+      toast.error((error as Error).message || "Could not reject order");
+    }
+  };
+
   const saveProfile = async () => {
     if (profile.username.trim().length < 3) {
       toast.error("Username must be at least 3 characters");
@@ -320,9 +366,18 @@ export function FarmerDashboard() {
       <header className="bg-card border-b sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src="/images/logomain.png" alt="SmithAgro" className="h-8 w-auto object-contain" />
+            <img src="/images/logomain.png" alt="SmithAgro" className="h-12 w-auto object-contain" />
             <Badge variant="outline">Farmer</Badge>
           </div>
+          <nav className="hidden md:flex items-center gap-4">
+            <Button variant={activeTab === "crops" ? "default" : "ghost"} onClick={() => setActiveTab("crops")}>Crops</Button>
+            <Button variant={activeTab === "orders" ? "default" : "ghost"} onClick={() => setActiveTab("orders")}>Orders</Button>
+            <Button variant={activeTab === "trainings" ? "default" : "ghost"} onClick={() => setActiveTab("trainings")}>Training</Button>
+            <Button variant={activeTab === "learning" ? "default" : "ghost"} onClick={() => setActiveTab("learning")}>Learning</Button>
+            <Button variant={activeTab === "weather" ? "default" : "ghost"} onClick={() => setActiveTab("weather")}>Weather</Button>
+            <Button variant={activeTab === "alerts" ? "default" : "ghost"} onClick={() => setActiveTab("alerts")}>Alerts</Button>
+            <Button variant={activeTab === "account" ? "default" : "ghost"} onClick={() => setActiveTab("account")}>Account</Button>
+          </nav>
           <div className="flex items-center gap-3">
             <span className="text-sm">{user?.name}</span>
             <Button
@@ -404,14 +459,53 @@ export function FarmerDashboard() {
             setActiveTab(nextTab);
           }}
         >
-          <TabsList className="flex flex-wrap">
-            <TabsTrigger value="crops">Crops</TabsTrigger>
-            <TabsTrigger value="trainings">Training</TabsTrigger>
-            <TabsTrigger value="learning">Learning</TabsTrigger>
-            <TabsTrigger value="weather">Weather</TabsTrigger>
-            <TabsTrigger value="alerts">Alerts</TabsTrigger>
-            <TabsTrigger value="account">Account</TabsTrigger>
-          </TabsList>
+          <TabsContent value="orders" className="space-y-4">
+            <Card>
+              <CardHeader><CardTitle>Incoming Orders</CardTitle></CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {orders.filter(o => o.status === "pending").map((order) => (
+                    <div key={order.id} className="border rounded-md p-3">
+                      <div className="flex items-center justify-between">
+                        <p className="font-medium">Order {order.id} from {order.buyerName}</p>
+                        <Badge variant="outline" className="capitalize">{order.status}</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{new Date(order.orderDate).toLocaleString()}</p>
+                      <p className="text-sm">Delivery: {order.deliveryMethod} • {order.address}</p>
+                      {order.deliveryTime && <p className="text-sm">Preferred Time: {new Date(order.deliveryTime).toLocaleString()}</p>}
+                      {order.paymentMethod && <p className="text-sm">Payment: {order.paymentMethod}</p>}
+                      <div className="text-sm mt-2 space-y-1">
+                        {order.items.map((item) => (
+                          <p key={item.product.id}>{item.quantity} x {item.product.name} (${item.product.price} {item.product.unit})</p>
+                        ))}
+                      </div>
+                      <p className="font-semibold mt-2">Total ${order.total.toFixed(2)}</p>
+                      <div className="flex gap-2 mt-2">
+                        <Button size="sm" onClick={() => handleAcceptOrder(order.id)}>Accept</Button>
+                        <Button size="sm" variant="outline" onClick={() => handleRejectOrder(order.id)}>Reject</Button>
+                      </div>
+                    </div>
+                  ))}
+                  {orders.filter(o => o.status !== "pending").length > 0 && (
+                    <div className="mt-6">
+                      <h3 className="font-medium mb-2">Processed Orders</h3>
+                      {orders.filter(o => o.status !== "pending").map((order) => (
+                        <div key={order.id} className="border rounded-md p-3">
+                          <div className="flex items-center justify-between">
+                            <p className="font-medium">Order {order.id} from {order.buyerName}</p>
+                            <Badge variant="outline" className="capitalize">{order.status}</Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">{new Date(order.orderDate).toLocaleString()}</p>
+                          <p className="text-sm">Delivery: {order.deliveryMethod} • {order.address}</p>
+                          <p className="font-semibold">Total ${order.total.toFixed(2)}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
           <TabsContent value="trainings" className="space-y-4">
             <Card>
               <CardHeader><CardTitle>Training Sessions</CardTitle></CardHeader>

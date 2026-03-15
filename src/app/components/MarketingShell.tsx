@@ -30,7 +30,7 @@ export function MarketingHeader() {
             alt="AgroTechSolution"
             width={300}
             height={80}
-            className="h-14 w-auto max-w-[220px] object-contain md:h-[80px] md:max-w-[300px]"
+            className="h-16 w-auto max-w-[260px] object-contain md:h-[100px] md:max-w-[350px]"
           />
         </Link>
 

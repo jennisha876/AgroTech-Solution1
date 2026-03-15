@@ -20,13 +20,12 @@ export function AiAssistant() {
     {
       role: "assistant",
       content:
-        "I am TechGro. I can help with crop disease detection, treatment options, crop quality checks, and weather-risk decisions. Upload a crop image if you want me to scan it and suggest likely issues.",
+        "I am TechGro. I can help with any farming-related question—from crop health and pest control to market access and logistics. Upload a crop image if you want me to scan it and suggest likely issues.",
     },
   ]);
 
   const quickPrompts = [
     "My tomato leaves have yellow spots and curling. What disease could this be and what should I do first?",
-    "Compare vertical farming, traditional farming, and aquaponics for a small farmer in Jamaica.",
     "Create a 7-day crop monitoring checklist for disease and pest detection.",
   ];
 
@@ -35,7 +34,7 @@ export function AiAssistant() {
       return;
     }
 
-    const baseMessage = message.trim() || "Please analyze this uploaded crop image and scan for disease, damage, or quality issues. Suggest likely causes and treatment steps.";
+    const baseMessage = message.trim() || "Please analyze this uploaded crop image and scan for disease, damage, or quality issues. Suggest likely causes and treatment steps, and share general farming guidance where helpful.";
     const nextUserMessage = {
       role: "user" as const,
       content: imageDataUrl ? `${baseMessage}\n[Image attached: ${imageName || "crop-image"}]` : baseMessage,
@@ -84,7 +83,7 @@ export function AiAssistant() {
   return (
     <div className="fixed bottom-4 right-4 z-50">
       {open ? (
-        <Card className="w-[340px] shadow-xl">
+        <Card className="w-[340px] sm:w-[420px] md:w-[520px] max-w-[calc(100vw-2rem)] shadow-xl">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base">TechGro Assistant</CardTitle>
@@ -111,7 +110,7 @@ export function AiAssistant() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="h-auto py-1 px-2 text-xs text-left"
+                  className="h-auto py-1 px-2 text-xs text-left max-w-[180px] truncate"
                   onClick={() => setMessage(prompt)}
                 >
                   {prompt}

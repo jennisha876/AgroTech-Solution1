@@ -12,6 +12,8 @@ import { Leaf, LogOut, Search, ShoppingCart, Plus, Minus, Trash2, UserCircle, Ey
 import { toast } from "sonner";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import L from "leaflet";
+import "leaflet-routing-machine";
+import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
 import { ThemeToggle } from "./ThemeToggle";
 import { JAMAICA_PARISHES } from "../lib/parishes";
 
@@ -26,6 +28,8 @@ interface Order {
   status: "pending" | "processing" | "shipped" | "delivered";
   deliveryMethod: "delivery" | "pickup";
   address: string;
+  deliveryTime?: string;
+  paymentMethod?: string;
   orderDate: string;
   items: CartItem[];
 }
@@ -107,7 +111,14 @@ export function BuyerDashboard() {
 
   const [deliveryMethod, setDeliveryMethod] = useState<"delivery" | "pickup">("delivery");
   const [deliveryAddress, setDeliveryAddress] = useState(user?.location || "");
+  const [deliveryTime, setDeliveryTime] = useState("");
   const [paying, setPaying] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "paypal" | "bank" | "cash">("card");
+  const [bankAccount, setBankAccount] = useState("");
+  const [paypalEmail, setPaypalEmail] = useState("");
+  const [cardNumber, setCardNumber] = useState("");
+  const [cardExpiry, setCardExpiry] = useState("");
+  const [cardCvv, setCardCvv] = useState("");
 
   const [profile, setProfile] = useState({
     name: user?.name || "",
@@ -188,6 +199,7 @@ export function BuyerDashboard() {
       .bindPopup("Your delivery location");
 
     let maxDistance = 0;
+    const routingControls: any[] = [];
     cart.forEach((item) => {
       const source: [number, number] = [item.product.lat, item.product.lng];
       const distance = calculateDistance(source, buyerCoords);
@@ -198,8 +210,24 @@ export function BuyerDashboard() {
         .addTo(map)
         .bindPopup(`${item.product.name} from ${item.product.location}<br>Distance: ${distance.toFixed(1)} km`);
 
-      // Add route line (simplified as polyline)
-      L.polyline([source, buyerCoords], { color: "blue", weight: 3, opacity: 0.7 }).addTo(map);
+      // Add routing control for route from product to buyer
+      const routingControl = L.Routing.control({
+        waypoints: [
+          L.latLng(source[0], source[1]),
+          L.latLng(buyerCoords[0], buyerCoords[1])
+        ],
+        routeWhileDragging: false,
+        addWaypoints: false,
+        createMarker: () => null, // Don't create additional markers
+        lineOptions: {
+          styles: [{ color: 'blue', weight: 4, opacity: 0.7 }]
+        },
+        showAlternatives: true, // Show alternative routes
+        altLineOptions: {
+          styles: [{ color: 'gray', weight: 3, opacity: 0.5 }]
+        }
+      }).addTo(map);
+      routingControls.push(routingControl);
     });
 
     // Fit map to show all markers
@@ -210,6 +238,14 @@ export function BuyerDashboard() {
       ]);
       map.fitBounds(group.getBounds().pad(0.1));
     }
+
+    return () => {
+      routingControls.forEach(control => map.removeControl(control));
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+    };
 
     return () => {
       if (mapInstanceRef.current) {
@@ -267,7 +303,9 @@ export function BuyerDashboard() {
         items: cart,
         deliveryMethod,
         address: deliveryMethod === "delivery" ? deliveryAddress : "Pickup",
-        payment: {
+        deliveryTime: deliveryMethod === "delivery" ? deliveryTime : null,
+        paymentMethod,
+        payment: paymentMethod === "cash" ? null : {
           status: payment.status,
           paymentIntentId: payment.paymentIntentId,
           provider: payment.provider,
@@ -341,7 +379,7 @@ export function BuyerDashboard() {
       <header className="bg-card border-b sticky top-0 z-20">
         <div className="container mx-auto px-4 py-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-2">
-            <img src="/images/logomain.png" alt="SmithAgro" className="h-8 w-auto object-contain" />
+            <img src="/images/logomain.png" alt="SmithAgro" className="h-12 w-auto object-contain" />
             <Badge variant="outline">Buyer</Badge>
           </div>
 
@@ -498,6 +536,8 @@ export function BuyerDashboard() {
                       </div>
                       <p className="text-sm text-muted-foreground">{new Date(order.orderDate).toLocaleString()}</p>
                       <p className="text-sm">Delivery: {order.deliveryMethod} • {order.address}</p>
+                      {order.deliveryTime && <p className="text-sm">Preferred Time: {new Date(order.deliveryTime).toLocaleString()}</p>}
+                      {order.paymentMethod && <p className="text-sm">Payment: {order.paymentMethod}</p>}
                       <div className="text-sm mt-2 space-y-1">
                         {order.items.map((item) => (
                           <div key={`${order.id}-${item.product.id}`} className="border rounded p-2">
@@ -556,17 +596,69 @@ export function BuyerDashboard() {
               <CardHeader><CardTitle>Checkout</CardTitle></CardHeader>
               <CardContent className="space-y-3">
                 <p>Total: <span className="font-semibold">${cartTotal.toFixed(2)}</span></p>
-                <Select value={deliveryMethod} onValueChange={(value: "delivery" | "pickup") => setDeliveryMethod(value)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="delivery">Delivery</SelectItem>
-                    <SelectItem value="pickup">Pickup</SelectItem>
-                  </SelectContent>
-                </Select>
-                {deliveryMethod === "delivery" && (
-                  <Input placeholder="Delivery address or parish" value={deliveryAddress} onChange={(e) => setDeliveryAddress(e.target.value)} />
+                <div className="space-y-2">
+                  <Label>Payment Method</Label>
+                  <Select value={paymentMethod} onValueChange={(value: "card" | "paypal" | "bank" | "cash") => setPaymentMethod(value)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="card">Credit/Debit Card</SelectItem>
+                      <SelectItem value="paypal">PayPal</SelectItem>
+                      <SelectItem value="bank">Bank Transfer</SelectItem>
+                      <SelectItem value="cash">Cash on Delivery</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {paymentMethod === "card" && (
+                  <div className="space-y-2">
+                    <Label>Card Number</Label>
+                    <Input placeholder="1234 5678 9012 3456" value={cardNumber} onChange={(e) => setCardNumber(e.target.value)} />
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label>Expiry Date</Label>
+                        <Input placeholder="MM/YY" value={cardExpiry} onChange={(e) => setCardExpiry(e.target.value)} />
+                      </div>
+                      <div>
+                        <Label>CVV</Label>
+                        <Input placeholder="123" value={cardCvv} onChange={(e) => setCardCvv(e.target.value)} />
+                      </div>
+                    </div>
+                  </div>
                 )}
-                <Button onClick={checkout} disabled={paying || !cart.length} className="w-full bg-green-600 hover:bg-green-700">
+                {paymentMethod === "bank" && (
+                  <div className="space-y-2">
+                    <Label>Bank Account Number</Label>
+                    <Input placeholder="Enter your bank account number" value={bankAccount} onChange={(e) => setBankAccount(e.target.value)} />
+                  </div>
+                )}
+                {paymentMethod === "paypal" && (
+                  <div className="space-y-2">
+                    <Label>PayPal Email</Label>
+                    <Input type="email" placeholder="Enter your PayPal email" value={paypalEmail} onChange={(e) => setPaypalEmail(e.target.value)} />
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <Label>Delivery Method</Label>
+                  <Select value={deliveryMethod} onValueChange={(value: "delivery" | "pickup") => setDeliveryMethod(value)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="delivery">Delivery</SelectItem>
+                      <SelectItem value="pickup">Pickup</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {deliveryMethod === "delivery" && (
+                  <>
+                    <div className="space-y-2">
+                      <Label>Delivery Address</Label>
+                      <Input placeholder="Delivery address or parish" value={deliveryAddress} onChange={(e) => setDeliveryAddress(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Preferred Delivery Time</Label>
+                      <Input type="datetime-local" value={deliveryTime} onChange={(e) => setDeliveryTime(e.target.value)} />
+                    </div>
+                  </>
+                )}
+                <Button onClick={checkout} disabled={paying || !cart.length || (paymentMethod === "card" && (!cardNumber || !cardExpiry || !cardCvv)) || (paymentMethod === "bank" && !bankAccount) || (paymentMethod === "paypal" && !paypalEmail) || (deliveryMethod === "delivery" && !deliveryAddress)} className="w-full bg-green-600 hover:bg-green-700">
                   {paying ? "Processing..." : "Pay and Place Order"}
                 </Button>
               </CardContent>

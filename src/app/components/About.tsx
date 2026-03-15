@@ -32,19 +32,27 @@ export function About() {
               <CardTitle>Mission</CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-black/70">
-              Make agricultural decision-making more accessible, more organized, and more reliable for local farmers and food buyers.
+              Connect farmers directly with customers, reduce reliance on middlemen, and provide practical digital tools and AI guidance that boost productivity, reduce losses, and lock in fair prices.
             </CardContent>
           </Card>
 
           <Card className="border-green-100 shadow-sm">
             <CardHeader>
-              <CardTitle>Focus Areas</CardTitle>
+              <CardTitle>Vision</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-black/70">
+              A world where farmers thrive with direct access to markets, consumers enjoy fresh locally sourced food, and AI-powered insights make farming smarter, more sustainable, and more resilient.
+            </CardContent>
+          </Card>
+
+          <Card className="border-green-100 shadow-sm">
+            <CardHeader>
+              <CardTitle>Memberships</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-sm text-black/70">
-              <p>Crop tracking and production visibility</p>
-              <p>Weather awareness and farm alerts</p>
-              <p>Training access and continuous learning</p>
-              <p>Fresh produce trade and buyer connection</p>
+              <p>Basic Subscription – Monthly access to the core platform and marketplace.</p>
+              <p>Diamond Subscription – Yearly access with priority support and advanced tools.</p>
+              <p>Platinum Subscription – Yearly access plus on-site training and dedicated onboarding assistance.</p>
             </CardContent>
           </Card>
         </div>

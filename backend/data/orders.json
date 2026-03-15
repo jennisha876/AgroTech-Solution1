@@ -1,1 +1,33 @@
-[]
+[
+  {
+    "id": "ord_1773588418196_276",
+    "items": [
+      {
+        "product": {
+          "id": "p1",
+          "name": "Callaloo Bundle",
+          "price": 2.2,
+          "unit": "per bunch",
+          "farmer": "St. Thomas Fields",
+          "location": "St. Thomas",
+          "stock": 180,
+          "category": "vegetables",
+          "image": "https://images.unsplash.com/photo-1518843875459-f738682238a6?fit=max&fm=jpg&q=80&w=1080",
+          "description": "Fresh callaloo harvested each morning."
+        },
+        "quantity": 1
+      }
+    ],
+    "deliveryMethod": "delivery",
+    "address": "Clarendon",
+    "payment": {
+      "status": "mock_success",
+      "paymentIntentId": "mock_pi_1773588418000",
+      "provider": "mock"
+    },
+    "total": 2.2,
+    "status": "pending",
+    "userId": "usr_test_buyer_001",
+    "orderDate": "2026-03-15T15:26:58.196Z"
+  }
+]
