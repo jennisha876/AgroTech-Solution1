@@ -104,7 +104,7 @@ export function SubscriptionModal({ open, onClose, onSubscribe }: {
         <DialogFooter>
           <Button disabled={!selected} onClick={() => selected && onSubscribe(selected, currency)} className="w-full bg-green-600 hover:bg-green-700">Continue</Button>
           <DialogClose asChild>
-            <Button variant="outline" className="w-full mt-2">Cancel</Button>
+            <Button variant="outline" className="w-full mt-2">Continue without plan</Button>
           </DialogClose>
         </DialogFooter>
       </DialogContent>

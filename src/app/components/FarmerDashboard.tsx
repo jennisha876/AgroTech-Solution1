@@ -29,10 +29,11 @@ const emptyForm = {
 
 export function FarmerDashboard() {
 
-  const { user, logout, updateProfile, changePassword, switchRole } = useAuth();
+  const { user, logout, updateProfile, changePassword, switchRole, refreshMe } = useAuth();
   const [showSubscription, setShowSubscription] = useState(false);
   const [upgrading, setUpgrading] = useState(false);
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState("crops");
 
   const [crops, setCrops] = useState<Crop[]>([]);
   const [form, setForm] = useState(emptyForm);
@@ -64,6 +65,14 @@ export function FarmerDashboard() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
 
+  const hasSelectedMembership = Boolean(user?.subscriptionLevel);
+  const isMembershipRequired = user?.userType === "farmer" && !hasSelectedMembership;
+
+  const promptMembershipSelection = () => {
+    setShowSubscription(true);
+    setUpgrading(true);
+  };
+
   useEffect(() => {
     setProfile({
       name: user?.name || "",
@@ -73,6 +82,14 @@ export function FarmerDashboard() {
       phone: user?.phone || "",
     });
   }, [user]);
+
+  useEffect(() => {
+    if (isMembershipRequired) {
+      setActiveTab("account");
+      setShowSubscription(true);
+      setUpgrading(true);
+    }
+  }, [isMembershipRequired]);
 
   useEffect(() => {
     const load = async () => {
@@ -102,6 +119,12 @@ export function FarmerDashboard() {
   }, [crops]);
 
   const loadWeather = async () => {
+    if (isMembershipRequired) {
+      toast.error("Choose a membership to access Weather and Alerts.");
+      promptMembershipSelection();
+      return;
+    }
+
     try {
       const response = await api.getWeather(weatherLocation);
       setWeather(response);
@@ -144,6 +167,12 @@ export function FarmerDashboard() {
   const onSiteCount = monthlyTrainings.filter(t => t.type === "on-site").length;
   // Book a training session
   const handleBookTraining = async () => {
+    if (isMembershipRequired) {
+      toast.error("Choose a membership to book training sessions.");
+      promptMembershipSelection();
+      return;
+    }
+
     if (!trainingDate) {
       toast.error("Select a date for your training session.");
       return;
@@ -152,23 +181,20 @@ export function FarmerDashboard() {
     if (user?.subscriptionLevel === "basic" && onlineCount >= 1) {
       toast.error("Basic plan: 1 online training/month. Upgrade for more.");
       setBooking(false);
-      setShowSubscription(true);
-      setUpgrading(true);
+      promptMembershipSelection();
       return;
     }
     if (user?.subscriptionLevel === "diamond") {
       if (trainingType === "online" && onlineCount >= 2) {
         toast.error("Diamond: 2 online/month. Upgrade for more.");
         setBooking(false);
-        setShowSubscription(true);
-        setUpgrading(true);
+        promptMembershipSelection();
         return;
       }
       if (trainingType === "on-site" && onSiteCount >= 1) {
         toast.error("Diamond: 1 on-site/month. Upgrade for more.");
         setBooking(false);
-        setShowSubscription(true);
-        setUpgrading(true);
+        promptMembershipSelection();
         return;
       }
     }
@@ -183,6 +209,12 @@ export function FarmerDashboard() {
   };
 
   const submitCrop = async () => {
+    if (isMembershipRequired) {
+      toast.error("Choose a membership to manage crops.");
+      promptMembershipSelection();
+      return;
+    }
+
     if (!form.name.trim()) {
       toast.error("Crop name is required");
       return;
@@ -193,8 +225,7 @@ export function FarmerDashboard() {
     }
     if (user?.userType === "farmer" && crops.length >= cropLimit) {
       toast.error("You have reached your crop/customer limit for your subscription. Upgrade to add more.");
-      setShowSubscription(true);
-      setUpgrading(true);
+      promptMembershipSelection();
       return;
     }
 
@@ -333,6 +364,8 @@ export function FarmerDashboard() {
               const payment = await api.createPaymentIntent(amount, currency);
               if (payment.status === "mock_success" || payment.status === "succeeded") {
                 await api.updateSubscription(level);
+                await refreshMe();
+                setActiveTab("crops");
                 toast.success(`Upgraded to ${level.charAt(0).toUpperCase() + level.slice(1)}! Payment successful.`);
               } else {
                 toast.error("Payment failed or requires action. Please try again.");
@@ -344,7 +377,9 @@ export function FarmerDashboard() {
             // On trial, allow upgrade without payment
             try {
               await api.updateSubscription(level);
-              toast.success(`Upgraded to ${level.charAt(0).toUpperCase() + level.slice(1)}! Please refresh to see new limits.`);
+              await refreshMe();
+              setActiveTab("crops");
+              toast.success(`Upgraded to ${level.charAt(0).toUpperCase() + level.slice(1)}!`);
             } catch (e) {
               toast.error("Failed to update subscription. Please try again.");
             }
@@ -364,18 +399,32 @@ export function FarmerDashboard() {
           <Card className="mb-4">
             <CardContent className="pt-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
-                <div className="font-semibold">Membership: <span className="capitalize">{user.subscriptionLevel || "basic"}</span> ({user.subscriptionStatus || "trial"})</div>
+                <div className="font-semibold">Membership: <span className="capitalize">{user.subscriptionLevel || "not selected"}</span> ({user.subscriptionStatus || "pending"})</div>
                 {user.trialEndsAt && (
                   <div className="text-sm text-muted-foreground">Trial ends: {new Date(user.trialEndsAt).toLocaleDateString()}</div>
                 )}
+                {isMembershipRequired && (
+                  <div className="text-sm text-amber-600 mt-1">Select any membership to unlock crops, training, learning, weather, and alerts.</div>
+                )}
               </div>
-              <Button variant="outline" onClick={() => { setShowSubscription(true); setUpgrading(true); }}>
+              <Button variant="outline" onClick={promptMembershipSelection}>
                 {upgrading ? "Upgrade" : "Manage Subscription"}
               </Button>
             </CardContent>
           </Card>
         )}
-        <Tabs defaultValue="crops">
+        <Tabs
+          defaultValue="crops"
+          value={activeTab}
+          onValueChange={(nextTab) => {
+            if (isMembershipRequired && nextTab !== "account") {
+              toast.error("Select a membership first to access this section.");
+              promptMembershipSelection();
+              return;
+            }
+            setActiveTab(nextTab);
+          }}
+        >
           <TabsList className="flex flex-wrap">
             <TabsTrigger value="crops">Crops</TabsTrigger>
             <TabsTrigger value="trainings">Training</TabsTrigger>
