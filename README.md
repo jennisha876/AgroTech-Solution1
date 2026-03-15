@@ -1,5 +1,7 @@
 # AgroTechSolution
 
+✅ **Live demo:** https://agrotech-solution.onrender.com
+
 AgroTechSolution is a full-stack agriculture marketplace and farm-management platform.
 
 Codebase guide: [docs/CODE_GUIDE.md](docs/CODE_GUIDE.md)
