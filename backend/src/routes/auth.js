@@ -32,9 +32,8 @@ const registerSchema = z.object({
 });
 
 const loginSchema = z.object({
-  email: z.string().email("Please provide a valid email address"),
+  identifier: z.string().trim().min(1, "Email or username is required"),
   password: z.string().min(1, "Password is required"),
-  userType: z.enum(["farmer", "buyer", "admin"]),
 });
 
 router.post("/register", async (req, res) => {
@@ -91,20 +90,34 @@ router.post("/login", async (req, res) => {
   }
 
   const users = await readJson("users.json", []);
-  const user = users.find(
-    (u) =>
-      u.email.toLowerCase() === parseResult.data.email.toLowerCase() &&
-      u.userType === parseResult.data.userType
+  const identifier = parseResult.data.identifier.toLowerCase();
+  const candidates = users.filter(
+    (u) => u.email.toLowerCase() === identifier || u.username.toLowerCase() === identifier
   );
 
-  if (!user) {
+  if (candidates.length === 0) {
     return res.status(401).json({ message: "Invalid email or password" });
   }
 
-  const passwordOk = await bcrypt.compare(parseResult.data.password, user.passwordHash);
-  if (!passwordOk) {
+  const passwordMatches = [];
+  for (const candidate of candidates) {
+    const ok = await bcrypt.compare(parseResult.data.password, candidate.passwordHash);
+    if (ok) {
+      passwordMatches.push(candidate);
+    }
+  }
+
+  if (passwordMatches.length === 0) {
     return res.status(401).json({ message: "Invalid email or password" });
   }
+
+  if (passwordMatches.length > 1 && identifier.includes("@")) {
+    return res.status(409).json({
+      message: "Multiple accounts found for this email. Please log in using your username.",
+    });
+  }
+
+  const user = passwordMatches[0];
 
   const token = signToken(user);
   return res.json({ token, user: { ...user, passwordHash: undefined } });

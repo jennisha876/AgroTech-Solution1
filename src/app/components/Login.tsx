@@ -5,14 +5,12 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { User, ShoppingBag, Eye, EyeOff, Shield } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 
 export function Login() {
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
-  const [userType, setUserType] = useState<"farmer" | "buyer" | "admin">("farmer");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { login, requestPasswordReset } = useAuth();
@@ -23,7 +21,7 @@ export function Login() {
     setLoading(true);
 
     try {
-      const result = await login(email, password, userType);
+      const result = await login(identifier, password);
       if (result.ok) {
         toast.success("Welcome back!");
         navigate("/dashboard");
@@ -67,56 +65,18 @@ export function Login() {
         <Card>
           <CardHeader>
             <CardTitle>Welcome Back</CardTitle>
-            <CardDescription>Sign in to your SmithAgro account</CardDescription>
+            <CardDescription>Login to your AgroTechSolution account</CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs value={userType} onValueChange={(value) => setUserType(value as "farmer" | "buyer" | "admin")} className="mb-4">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="farmer" className="gap-2">
-                  <User className="h-4 w-4" />
-                  Farmer
-                </TabsTrigger>
-                <TabsTrigger value="buyer" className="gap-2">
-                  <ShoppingBag className="h-4 w-4" />
-                  Buyer
-                </TabsTrigger>
-                <TabsTrigger value="admin" className="gap-2">
-                  <Shield className="h-4 w-4" />
-                  Admin
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="farmer">
-                <div className="text-center py-4">
-                  <p className="text-sm text-gray-600">
-                    Login as a farmer to manage your crops and weather alerts
-                  </p>
-                </div>
-              </TabsContent>
-              <TabsContent value="buyer">
-                <div className="text-center py-4">
-                  <p className="text-sm text-gray-600">
-                    Login as a buyer to shop fresh produce from local farms
-                  </p>
-                </div>
-              </TabsContent>
-              <TabsContent value="admin">
-                <div className="text-center py-4">
-                  <p className="text-sm text-gray-600">
-                    Login as admin to access AgroTechSolution system controls
-                  </p>
-                </div>
-              </TabsContent>
-            </Tabs>
-
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="identifier">Email or Username</Label>
                 <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  id="identifier"
+                  type="text"
+                  placeholder="you@example.com or username"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
                   required
                 />
               </div>

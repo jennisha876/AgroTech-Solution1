@@ -85,7 +85,7 @@ export const api = {
     });
   },
 
-  async login(payload: { email: string; password: string; userType: UserType }) {
+  async login(payload: { identifier: string; password: string }) {
     return request<{ token: string; user: User }>("/auth/login", {
       method: "POST",
       body: JSON.stringify(payload),

@@ -3,7 +3,7 @@ import { api, User, UserType } from '../lib/api';
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string, userType: UserType) => Promise<{ ok: boolean; message?: string }>;
+  login: (identifier: string, password: string) => Promise<{ ok: boolean; message?: string }>;
   register: (payload: {
     email: string;
     password: string;
@@ -65,9 +65,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const login = async (email: string, password: string, userType: UserType): Promise<{ ok: boolean; message?: string }> => {
+  const login = async (identifier: string, password: string): Promise<{ ok: boolean; message?: string }> => {
     try {
-      const response = await api.login({ email, password, userType });
+      const response = await api.login({ identifier, password });
       localStorage.setItem('authToken', response.token);
       setUser(response.user);
       return { ok: true };
