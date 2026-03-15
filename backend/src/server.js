@@ -74,6 +74,19 @@ app.use((_, res) => {
   res.status(404).json({ message: "Not found" });
 });
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(`Backend API running on http://localhost:${port}`);
+});
+
+server.on("error", (error) => {
+  if (error?.code === "EADDRINUSE") {
+    console.error(`Port ${port} is already in use.`);
+    if (process.env.NODE_ENV !== "production") {
+      console.error("Another backend instance is already running; continuing in dev mode.");
+      return;
+    }
+  }
+
+  console.error(error);
+  process.exit(1);
 });
