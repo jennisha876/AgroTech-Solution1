@@ -8,7 +8,17 @@ export interface User {
   userType: UserType;
   location?: string;
   phone?: string;
+  // Subscription fields for farmers
+  subscriptionLevel?: "basic" | "diamond" | "platinum";
+  subscriptionStatus?: "trial" | "active" | "expired";
+  trialEndsAt?: string;
 }
+  async updateSubscription(level: "basic" | "diamond" | "platinum") {
+    return request<{ message: string; user: User }>("/users/subscription", {
+      method: "PUT",
+      body: JSON.stringify({ subscriptionLevel: level }),
+    });
+  },
 
 export interface Product {
   id: string;

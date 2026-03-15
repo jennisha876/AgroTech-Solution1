@@ -1,3 +1,44 @@
+// --- Subscription update endpoint ---
+const subscriptionSchema = z.object({
+  subscriptionLevel: z.enum(["basic", "diamond", "platinum"]),
+});
+
+router.put("/subscription", requireAuth, async (req, res) => {
+  const parseResult = subscriptionSchema.safeParse(req.body);
+  if (!parseResult.success) {
+    return res.status(400).json({ message: "Invalid subscription data" });
+  }
+  const users = await readJson("users.json", []);
+  const index = users.findIndex((u) => u.id === req.user.id);
+  if (index === -1) {
+    return res.status(404).json({ message: "User not found" });
+  }
+  const user = users[index];
+  if (user.userType !== "farmer") {
+    return res.status(403).json({ message: "Only farmers can update subscription" });
+  }
+  const { subscriptionLevel } = parseResult.data;
+  let trialEndsAt = user.trialEndsAt;
+  // If switching plan, reset trial if not already expired
+  const now = new Date();
+  if (!trialEndsAt || new Date(trialEndsAt) < now) {
+    const trial = new Date();
+    trial.setDate(trial.getDate() + 30);
+    trialEndsAt = trial.toISOString();
+  }
+  users[index] = {
+    ...user,
+    subscriptionLevel,
+    subscriptionStatus: "trial",
+    trialEndsAt,
+    updatedAt: nowIso(),
+  };
+  await writeJson("users.json", users);
+  return res.json({
+    message: "Subscription updated",
+    user: { ...users[index], passwordHash: undefined },
+  });
+});
 import { Router } from "express";
 import bcrypt from "bcryptjs";
 import { z } from "zod";

@@ -100,10 +100,14 @@ export function Register() {
           setShowSubscription(false);
           if (pendingFarmer) navigate("/dashboard");
         }}
-        onSubscribe={(level: SubscriptionLevel) => {
+        onSubscribe={async (level: SubscriptionLevel) => {
           setShowSubscription(false);
-          // Here you would call your backend to save the subscription level
-          toast.success(`Subscribed to ${level.charAt(0).toUpperCase() + level.slice(1)} plan!`);
+          try {
+            await import("../lib/api").then(({ api }) => api.updateSubscription(level));
+            toast.success(`Subscribed to ${level.charAt(0).toUpperCase() + level.slice(1)} plan!`);
+          } catch (e) {
+            toast.error("Failed to update subscription. Please try again.");
+          }
           if (pendingFarmer) navigate("/dashboard");
         }}
       />

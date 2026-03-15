@@ -34,6 +34,8 @@ const registerSchema = z.object({
     .default("")
     .refine((value) => isValidParish(value), "Location must be a valid Jamaica parish"),
   phone: z.string().optional().default(""),
+  subscriptionLevel: z.enum(["basic", "diamond", "platinum"]).optional(),
+  trialEndsAt: z.string().optional(),
 });
 
 const loginSchema = z.object({
@@ -67,6 +69,19 @@ router.post("/register", async (req, res) => {
   }
 
   const passwordHash = await bcrypt.hash(payload.password, 12);
+  // Subscription logic for farmers
+  let subscriptionLevel = payload.subscriptionLevel;
+  let trialEndsAt = payload.trialEndsAt;
+  if (payload.userType === "farmer") {
+    subscriptionLevel = subscriptionLevel || "basic";
+    // Set trialEndsAt to 30 days from now if not provided
+    if (!trialEndsAt) {
+      const now = new Date();
+      now.setDate(now.getDate() + 30);
+      trialEndsAt = now.toISOString();
+    }
+  }
+
   const user = {
     id: makeId("usr"),
     name: payload.name,
@@ -78,6 +93,13 @@ router.post("/register", async (req, res) => {
     phone: payload.phone,
     createdAt: nowIso(),
     updatedAt: nowIso(),
+    ...(payload.userType === "farmer"
+      ? {
+          subscriptionLevel,
+          subscriptionStatus: "trial",
+          trialEndsAt,
+        }
+      : {}),
   };
 
   users.push(user);
