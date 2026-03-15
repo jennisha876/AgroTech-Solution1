@@ -1,7 +1,10 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const dataDir = path.resolve(process.cwd(), "data");
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const dataDir = path.resolve(__dirname, "../../data");
 
 export async function readJson(fileName, fallback = []) {
   const filePath = path.join(dataDir, fileName);
