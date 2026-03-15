@@ -116,7 +116,7 @@ export function Register() {
           {/* Logo */}
           <div className="flex items-center justify-center gap-2 mb-8">
             <Link to="/" aria-label="Go to homepage">
-              <img src="/images/logomain.png" alt="AgroTechSolution" className="h-12 w-auto" />
+              <img src="/images/logomain.png" alt="AgroTechSolution" className="h-16 w-auto" />
             </Link>
           </div>
 

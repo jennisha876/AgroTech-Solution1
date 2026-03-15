@@ -15,7 +15,7 @@ export function Home() {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Link to="/" aria-label="Go to homepage">
-              <img src="/images/logomain.png" alt="AgroTechSolution" className="h-9 w-auto" />
+              <img src="/images/logomain.png" alt="AgroTechSolution" className="h-12 w-auto" />
             </Link>
           </div>
           <nav className="flex items-center gap-4">

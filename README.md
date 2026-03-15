@@ -2,6 +2,8 @@
 
 AgroTechSolution is a full-stack agriculture marketplace and farm-management platform.
 
+Codebase guide: [docs/CODE_GUIDE.md](docs/CODE_GUIDE.md)
+
 It supports:
 - Buyer flows: search/filter products, cart, checkout simulation, delivery source tracking map, order history, and reviews.
 - Farmer flows: crop management, weather insights/alerts, and TechGro AI assistant.
